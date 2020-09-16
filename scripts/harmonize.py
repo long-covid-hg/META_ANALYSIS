@@ -163,7 +163,7 @@ def harmonize(file_in, file_ref, n_total, require_gnomad, passing_only, gnomad_m
                               s[h_idx['Allele1']], s[h_idx['Allele2']],
                               s[h_idx['AF_Allele2']], s[h_idx['imputationInfo']], s[h_idx['BETA']],
                               s[h_idx['SE']], s[h_idx['p.value']])
-            n = int(s[h_idx['N']]) if has_n else n_total
+            n = int(float(s[h_idx['N']])) if has_n else n_total
             ref_vars = []
             while ref_has_lines and int(ref_chr) < int(var.chr) or (int(ref_chr) == int(var.chr) and ref_pos < var.pos):
                 ref_line = fp_ref.readline().strip().split('\t')
