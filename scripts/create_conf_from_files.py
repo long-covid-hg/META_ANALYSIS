@@ -155,7 +155,7 @@ def create_meta_conf(studies):
                 if analysis == 'C2_ALL':
                     n=12
                 out_pheno.write('{}_leave_{}\t{}\n'.format(analysis, c, n))
-    quit()
+
     for analysis in od(sorted(conf.items())):
         print(analysis)
         with open('json/{}.json'.format(analysis), 'wt') as f:
