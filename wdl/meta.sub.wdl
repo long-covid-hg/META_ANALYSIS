@@ -121,11 +121,16 @@ task add_rsids_af {
 
         import gzip, numpy
 
-        fp_ref = gzip.open('${file_ref}', 'rt')
+        fp_ref = gzip.open('${ref_file}', 'rt')
         ref_has_lines = True
         ref_chr = 1
         ref_pos = 0
-        ref_h_idx = {h:i for i,h in enumerate(fp_ref.readline().strip().split('\t'))}
+        ref_line = fp_ref.readline()
+        while ref_line.startswith("##"):
+            ref_line = fp_ref.readline()
+        if ref_line.startswith('#'):
+            assert ref_line.rstrip('\r\n').split('\t') == '#CHROM POS ID REF ALT QUAL FILTER INFO'.split(), repr(ref_line)
+        ref_h_idx = {h:i for i,h in enumerate(ref_line.rstrip('\r\n').split('\t'))}
 
         with gzip.open('${file}', 'rt') as f:
             header = f.readline().strip()
@@ -149,25 +154,25 @@ task add_rsids_af {
                 alt = s[h_idx['ALT']]
                 ref_vars = []
                 while ref_has_lines and int(ref_chr) < chr or (int(ref_chr) == chr and ref_pos < pos):
-                    ref_line = fp_ref.readline().strip().split('\t')
+                    ref_line = fp_ref.readline().rstrip('\r\n').split('\t')
                     try:
-                        ref_chr = ref_line[ref_h_idx['#chr']]
-                        ref_pos = int(ref_line[ref_h_idx['pos']])
-                    except IndexError:
+                        ref_chr = ref_line[ref_h_idx['#CHROM']]
+                        ref_pos = int(ref_line[ref_h_idx['POS']])
+                    except ValueError:
                         ref_has_lines = False
                 while ref_has_lines and int(ref_chr) == chr and ref_pos == pos:
                     ref_vars.append(ref_line)
                     ref_line = fp_ref.readline().strip().split('\t')
                     try:
-                        ref_chr = ref_line[ref_h_idx['#chr']]
-                        ref_pos = int(ref_line[ref_h_idx['pos']])
-                    except IndexError:
+                        ref_chr = ref_line[ref_h_idx['#CHROM']]
+                        ref_pos = int(ref_line[ref_h_idx['POS']])
+                    except ValueError:
                         ref_has_lines = False
 
                 rsid = 'NA'
                 for r in ref_vars:
-                    if r[ref_h_idx['ref']] == ref and r[ref_h_idx['alt']] == alt:
-                        rsid = r[ref_h_idx['rsid']]
+                    if r[ref_h_idx['REF']] == ref and r[ref_h_idx['ALT']] == alt:
+                        rsid = r[ref_h_idx['ID']]
                         break
 
                 af_total = 0
