@@ -171,7 +171,7 @@ task add_rsids_af {
 
                 rsid = 'NA'
                 for r in ref_vars:
-                    if r[ref_h_idx['REF']] == ref and r[ref_h_idx['ALT']] == alt:
+                    if r[ref_h_idx['REF']] == ref and alt in r[ref_h_idx['ALT']].split(','):
                         rsid = r[ref_h_idx['ID']]
                         break
 
