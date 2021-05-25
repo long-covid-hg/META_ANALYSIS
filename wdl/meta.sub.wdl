@@ -121,7 +121,7 @@ task add_rsids_af {
 
         import gzip, numpy
 
-        fp_ref = gzip.open('${ref_file}', 'rt')
+        fp_ref = gzip.open('${file_ref}', 'rt')
         ref_has_lines = True
         ref_chr = 1
         ref_pos = 0
