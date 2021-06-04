@@ -3,16 +3,21 @@
 import os, sys, re, json
 from collections import defaultdict as dd, OrderedDict as od
 
-POP = ['EUR', 'AFR', 'FIN', 'ARAB', 'SAS', 'EAS', 'OTH', 'CSA', 'AMR', 'NON-EUR', 'HIS', 'ALL']
-ANA = ['A1', 'A2', 'B1', 'B2', 'B3', 'C1', 'C2', 'D1']
+POP = ['EUR', 'AFR', 'FIN', 'ARAB', 'SAS', 'EAS', 'OTH', 'CSA', 'AMR', 'NON-EUR', 'HIS', 'AMR_HIS', 'MID', 'ALL']
+ANA = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'D1']
 AGE = ['ALL', 'GT_60', 'LE_60']
+
+RESTRICT_ANALYSIS = ['A2_ALL', 'A3_ALL', 'B1_ALL', 'B2_ALL', 'C2_ALL']
+#RESTRICT_ANALYSIS = []
+#RESTRICT_ANALYSIS = ['A2_MALE', 'B1_MALE', 'B2_MALE', 'C2_MALE', 'A2_FEMALE', 'B1_FEMALE', 'B2_FEMALE', 'C2_FEMALE']
+#RESTRICT_ANALYSIS = ['A2_GT_60', 'B1_GT_60', 'B2_GT_60', 'C2_GT_60', 'A2_LE_60', 'B1_LE_60', 'B2_LE_60', 'C2_LE_60']
 
 def parse_file(uri):
     filename = uri.split('/').pop()
     filename = re.sub('.txt|.gz|.bgz', '', filename)
     fields = filename.split('.')
     ok = True
-    if (len(fields) != 11 and len(fields) != 19):
+    if (len(fields) != 11 and len(fields) != 19 and len(fields) != 20):
         print(str(len(fields)) + ' fields\t' + uri)
         return None
     try:
@@ -66,9 +71,11 @@ def write_munge_input(studies):
     replace_pops = [
         ('non-eur', 'all'),
         ('arab', 'all'),
+        ('mid', 'all'),
         ('eur', 'nfe'),
         ('csa', 'sas'),
-        ('his', 'amr')
+        ('his', 'amr'),
+        ('amr_his', 'amr')
     ]
     out = open('munge_input.txt', 'wt')
     for study in studies:
@@ -136,6 +143,8 @@ def create_meta_conf(studies):
     #remove double HOSTAGE
     conf['C2_ALL'] = [c for c in conf['C2_ALL'] if not (c['name'].startswith('Italy_HOSTAGE') or c['name'].startswith('Spain_HOSTAGE'))]
     conf['B2_ALL'] = [c for c in conf['B2_ALL'] if not (c['name'].startswith('Italy_HOSTAGE') or c['name'].startswith('Spain_HOSTAGE'))]
+    #remove CCHC_HIS because in C2 it's CCHC_AMR_HIS and CCHC_HIS bleeds over from A2_ALL
+    conf['C2_ALL'] = [c for c in conf['C2_ALL'] if not (c['name'] == 'CCHC_HIS')]
 
     out = open('analysis_files.txt', 'wt')
     out_pheno = open('analysis_phenos.txt', 'wt')
@@ -157,7 +166,7 @@ def create_meta_conf(studies):
                 out_pheno.write('{}_leave_{}\t{}\n'.format(analysis, c, n))
 
     for analysis in od(sorted(conf.items())):
-        print(analysis)
+        fw = open('analysis_' + analysis + '.txt', 'w')
         with open('json/{}.json'.format(analysis), 'wt') as f:
             json.dump({'meta': conf[analysis]}, f, indent=4)
         leave_ukbb = [cohort for cohort in conf[analysis] if not cohort['name'].lower().startswith('ukbb')]
@@ -169,6 +178,9 @@ def create_meta_conf(studies):
         leave_23andme = [cohort for cohort in conf[analysis] if not cohort['name'].lower().startswith('23andme')]
         with open('json/{}_leave_23andme.json'.format(analysis), 'wt') as f:
             json.dump({'meta': leave_23andme}, f, indent=4)
+        leave_ukbb23andme = [cohort for cohort in conf[analysis] if not cohort['name'].lower().startswith('23andme') and not cohort['name'].lower().startswith('ukbb')]
+        with open('json/{}_leave_UKBB_23andme.json'.format(analysis), 'wt') as f:
+            json.dump({'meta': leave_ukbb23andme}, f, indent=4)
         leave_prs = [cohort for cohort in conf[analysis] if not (
             cohort['name'].lower().startswith('hostage') or
             cohort['name'].lower().startswith('belcovid') or
@@ -212,12 +224,12 @@ def create_meta_conf(studies):
             )]
         with open('json/{}_eur_leave_ukbb_23andme.json'.format(analysis), 'wt') as f:
             json.dump({'meta': eur_leaveukbb23andme}, f, indent=4)
-        for cohort in conf[analysis]:
-            print('{}\t{}\t{}'.format(cohort['name'], cohort['n_cases'], cohort['n_controls']))
-            out.write(cohort['file'].replace('/cromwell_root/', 'gs://') + '\t')
-        out.write('\n')
-
-        print()
+        if len(RESTRICT_ANALYSIS) == 0 or analysis in RESTRICT_ANALYSIS:
+            for cohort in sorted(conf[analysis], key=lambda k: k['name'].lower()):
+                fw.write('{}\t{}\t{}'.format(cohort['name'], cohort['n_cases'], cohort['n_controls']) + '\n')
+                out.write(cohort['file'].replace('/cromwell_root/', 'gs://') + '\t')
+            out.write('\n')
+        fw.close()
     out.close()
 
 if __name__ == '__main__':

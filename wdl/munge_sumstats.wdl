@@ -202,6 +202,70 @@ task harmonize {
     }
 }
 
+task flip_mahalanobis {
+
+    String docker
+    File sumstat_file
+    Int sd
+    String outfile = basename(sumstat_file, ".gz") + ".mahalanobis_filt_" + sd + "sd"
+
+    command <<<
+
+        python3 - <<EOF
+
+        from scipy.spatial.distance import mahalanobis
+        import scipy as sp
+        import pandas as pd
+        import numpy as np
+        import re
+
+        data = pd.read_csv('${sumstat_file}', sep='\t')
+        gnomad_col = list(filter(re.compile('AF_gnomad_v3_b38_ref_').match, data.columns))[0]
+
+        # flip frequencies and betas
+        data['flipped'] = np.where(((data['AF_Allele2'] > 0.6) & (data[gnomad_col] < 0.4)) | ((data['AF_Allele2'] < 0.4) & (data[gnomad_col] > 0.6)), 1, 0)
+        data['AF_Allele2'] = np.where(data['flipped'] == 1, 1-data['AF_Allele2'], data['AF_Allele2'])
+        data['AF_fc'] = np.where(data['flipped'] == 1, data['AF_Allele2']/data[gnomad_col], data['AF_fc'])
+        data['BETA'] = np.where(data['flipped'] == 1, -data['BETA'], data['BETA'])
+
+        # calculate squared mahalanobis distance based on non-X variants
+        try:
+            afs = data[data['#CHR'] != 23][['AF_Allele2', gnomad_col]]
+            inv_cov = sp.linalg.inv(afs.cov().values)
+            mean = afs.mean().values
+            data['mahalanobis2'] = afs.apply(lambda row: mahalanobis(row, mean, inv_cov) ** 2, axis=1)
+            # filter data based on mahalanobis except X chr
+            mean = np.mean(data['mahalanobis2'])
+            sd = np.std(data['mahalanobis2'])
+            data = data[(data['#CHR'] == 23) | ((data['mahalanobis2'] > mean - ${sd} * sd) & (data['mahalanobis2'] < mean + ${sd} * sd))]
+        except np.linalg.LinAlgError: # singular matrix if AF is fixed
+            data['mahalanobis2'] = np.nan
+
+        data.to_csv('${outfile}', index=False, na_rep="NA", sep='\t')
+        EOF
+
+        bgzip -@4 ${outfile}
+        tabix -S 1 -s 1 -b 2 -e 2 ${outfile}.gz
+
+    >>>
+
+    output {
+        File out = outfile + ".gz"
+        File out_tbi = outfile + ".gz.tbi"
+    }
+
+    runtime {
+        docker: "${docker}"
+        cpu: "1"
+        # TODO memory by file size
+        memory: "20 GB"
+        disks: "local-disk 200 HDD"
+        zones: "us-east1-d"
+        preemptible: 2
+        noAddress: true
+    }
+}
+
 task plot {
 
     File sumstat_file
@@ -268,6 +332,12 @@ workflow munge_sumstats {
         call harmonize {
             input: sumstat_file=lift.out, gnomad_ref=sub(gnomad_ref_template, "POP", sumstat_file[1]), n=sumstat_file[2]
         }
+        #call flip_mahalanobis {
+        #    input: sumstat_file=harmonize.out
+        #}
+        #call plot {
+        #    input: sumstat_file=flip_mahalanobis.out, pop=sumstat_file[1]
+        #}
         call plot {
             input: sumstat_file=harmonize.out, pop=sumstat_file[1]
         }

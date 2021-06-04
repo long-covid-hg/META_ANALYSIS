@@ -35,9 +35,9 @@ task run_range {
         docker: "${docker}"
         cpu: "1"
         memory: "2 GB"
-        disks: "local-disk 200 HDD"
+        disks: "local-disk 400 HDD"
         zones: "us-east1-d"
-        preemptible: 0
+        preemptible: 2
         noAddress: true
     }
 }
@@ -82,9 +82,12 @@ task gather {
         gunzip -c ${pheno}_${method}_meta.gz | awk '
         BEGIN {FS=OFS="\t"}
         NR==1 {for(i=1;i<=NF;i++) a[$i]=i;}
-        {print $a["#CHR"],$a["POS"],$a["all_${method}_meta_p"]}
+        {print $a["#CHR"],$a["POS"],$a["SNP"],$a["all_${method}_meta_p"],$a["all_${method}_het_p"]}
         ' > ${pheno}_${method}_meta_p
+
+        cp ${pheno}_${method}_meta_p ${pheno}_${method}_meta_p_flag
         qqplot.R --file ${pheno}_${method}_meta_p --bp_col "POS" --chrcol "#CHR" --pval_col "all_${method}_meta_p" --loglog_ylim ${loglog_ylim}
+        qqplot.het.R --file ${pheno}_${method}_meta_p_flag --bp_col "POS" --chrcol "#CHR" --pval_col "all_${method}_meta_p" --snp_col "SNP" --loglog_ylim ${loglog_ylim}
 
         echo "`date` done"
 
@@ -101,7 +104,7 @@ task gather {
         memory: "20 GB"
         disks: "local-disk 200 SSD"
         zones: "us-east1-d"
-        preemptible: 0
+        preemptible: 2
         noAddress: true
     }
 }
@@ -205,7 +208,7 @@ task add_rsids_af {
         memory: "2 GB"
         disks: "local-disk 200 SSD"
         zones: "us-east1-d"
-        preemptible: 0
+        preemptible: 2
         noAddress: true
     }
 }
@@ -260,7 +263,54 @@ task filter_cols {
         memory: "2 GB"
         disks: "local-disk 200 SSD"
         zones: "us-east1-d"
-        preemptible: 0
+        preemptible: 2
+        noAddress: true
+    }
+}
+
+task filter_variants {
+
+    File variant_shortlist
+    File file
+    String outfile = basename(file, ".txt.gz") + ".10k.txt.gz"
+    String docker
+
+    command <<<
+
+        python3 <<EOF | bgzip > ${outfile}
+
+        import gzip
+
+        variants = {}
+        with open('${variant_shortlist}', 'rt') as f:
+            for line in f:
+                s = line.strip().split(' ')
+                variants[s[1]+':'+s[2]+':'+s[3]+':'+s[4]] = True
+
+        with gzip.open('${file}', 'rt') as f:
+            header = f.readline().strip()
+            snp_col = header.split('\t').index('SNP')
+            print(header)
+            for line in f:
+                line = line.strip()
+                s = line.split('\t')
+                if s[snp_col] in variants:
+                    print(line)
+        EOF
+
+    >>>
+
+    output {
+        File out = outfile
+    }
+
+    runtime {
+        docker: "${docker}"
+        cpu: "1"
+        memory: "10 GB"
+        disks: "local-disk 200 HDD"
+        zones: "us-east1-d"
+        preemptible: 2
         noAddress: true
     }
 }
@@ -332,7 +382,7 @@ task lift {
         memory: "20 GB"
         disks: "local-disk 200 SSD"
         zones: "us-east1-d"
-        preemptible: 0
+        preemptible: 2
         noAddress: true
     }
 }
@@ -364,7 +414,15 @@ workflow run_meta {
         input: pheno=pheno, file=add_rsids_af.out, method=method
     }
 
+    call filter_variants {
+        input: file=filter_cols.out
+    }
+
     call lift {
         input: file=filter_cols.out, method=method
+    }
+
+    call lift as lift_10k {
+        input: file=filter_variants.out, method=method
     }
 }
