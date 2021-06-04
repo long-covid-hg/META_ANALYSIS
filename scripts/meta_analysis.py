@@ -21,10 +21,41 @@ chrord["chrX"] = 23
 chrord["chrY"] = 24
 chrord["chrMT"] = 25
 chrord.update({str(chr):int(chr) for chr in list(range(1,25)) } )
+chrord.update({int(chr):int(chr) for chr in list(range(1,25)) } )
 
 re_allele = re.compile('^[ATCG]+$', re.IGNORECASE)
 
-def n_meta( studies : List[Tuple['Study','VariantData']] ):
+
+def het_test( effs_sizes: List[float], weights: List[float], effs_size_meta: float) -> float:
+    '''
+        Computes Cochran's Q test for heterogeneity
+        input:
+            effs_sizes: original effect sizes
+            weights: weights
+            effs_size_meta: effect size from meta-analysis
+        output:
+            p-value
+    '''
+    k=len(effs_sizes)
+
+    effs_sizes_array=numpy.array(effs_sizes)
+    weights_array=numpy.array(weights)    
+    eff_dev=weights_array*((effs_sizes_array-effs_size_meta)**2)
+    sum_eff_dev=numpy.sum(eff_dev)
+
+    return scipy.stats.distributions.chi2.sf(sum_eff_dev, k-1)
+
+def n_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
+    '''
+        Computes sample size weighted meta-analysis for variants in studies
+        input:
+            studies: studies and data in tuples
+        output:
+            tuple with results from meta-analysis or None
+    '''
+    weights = []
+    effs_size_org = [] 
+
     effs_size = []
     tot_size =0
     sum_betas=0
@@ -36,11 +67,25 @@ def n_meta( studies : List[Tuple['Study','VariantData']] ):
         sum_weights+= math.sqrt(study.effective_size)
         sum_betas+=math.sqrt(study.effective_size) * dat.beta
         tot_size+=study.effective_size
+        weights.append(math.sqrt(study.effective_size))
+        effs_size_org.append(dat.beta)
 
+    beta_meta=sum_betas/sum_weights
+    
     #TODO se
-    return ( sum_betas/ sum_weights, 0, max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf( abs( sum( effs_size ) ) / math.sqrt(tot_size) )))
+    return ( beta_meta, None, max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf( abs( sum( effs_size ) ) / math.sqrt(tot_size) )), effs_size_org, weights) if len(effs_size)==len(studies) else None
 
-def inv_var_meta( studies : List[Tuple['Study','VariantData']] ):
+
+def inv_var_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
+    '''
+        Computes inverse-variance weighted meta-analysis for variants in studies
+        input:
+            studies: studies and data in tuples
+        output:
+            tuple with results from meta-analysis or None
+    '''
+    weights = []
+    effs_size_org = []
 
     effs_inv_var = []
     sum_inv_var=0
@@ -49,15 +94,32 @@ def inv_var_meta( studies : List[Tuple['Study','VariantData']] ):
         dat = s[1]
         if dat.se is None or dat.se==0:
             print("Standard error was none/zero for variant " + str(dat) + " in study " + study.name, file=sys.stderr)
-            break
+            return None
         var = (dat.se * dat.se)
 
         inv_var =  (1/var)
         sum_inv_var+=inv_var
         effs_inv_var.append( inv_var *  dat.beta )
-    return (sum(effs_inv_var)/ sum_inv_var, math.sqrt(1/sum_inv_var), max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf(abs(sum(effs_inv_var) / math.sqrt(sum_inv_var) ))) ) if len(effs_inv_var)==len(studies) else None
 
-def variance_weight_meta( studies : List[Tuple['Study','VariantData']] ):
+        weights.append(inv_var)
+        effs_size_org.append(dat.beta)
+
+    beta_meta=sum(effs_inv_var)/ sum_inv_var
+    
+    return (beta_meta, math.sqrt(1/sum_inv_var), max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf(abs(sum(effs_inv_var) / math.sqrt(sum_inv_var) ))), effs_size_org, weights)
+
+
+def variance_weight_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
+    '''
+        Computes variance weighted meta-analysis for variants in studies
+        input:
+            studies: studies and data in tuples
+        output:
+            tuple with results from meta-analysis or None
+    '''
+    weights = []
+    effs_size_org = []
+
     effs_se = []
     tot_se = 0
     sum_weights=0
@@ -68,16 +130,21 @@ def variance_weight_meta( studies : List[Tuple['Study','VariantData']] ):
 
         if dat.se is None or dat.se==0:
             print("Standard error was none/zero for variant " + str(dat) + " in study " + study.name, file=sys.stderr)
-            break
+            return None
         weight =  (1/dat.se) * dat.z_score
         sum_weights+=weight
         sum_betas+= weight * dat.beta
         effs_se.append( weight * numpy.sign(dat.beta)  )
         tot_se+=1/ (dat.se * dat.se)
+        
+        weights.append(weight)
+        effs_size_org.append(dat.beta)
 
-    #TODO se
-    return ( sum_betas / sum_weights, 0, max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf( abs( sum( effs_se ) ) /  math.sqrt(tot_se))) ) if len(effs_se)==len(studies) else None
-
+    beta_meta=sum_betas / sum_weights
+    
+    #TODO SE
+    return (beta_meta, None, max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf( abs( sum( effs_se ) ) /  math.sqrt(tot_se))), effs_size_org, weights)
+    
 
 SUPPORTED_METHODS = {"n":n_meta,"inv_var":inv_var_meta,"variance":variance_weight_meta}
 
@@ -225,7 +292,7 @@ class Study:
         dont_allow_space: boolean, don't treat space as field delimiter (only tab)
         '''
         self.conf =conf
-        self.chrom = chrom
+        self.chrom = chrord[chrom] if chrom is not None else None
         self.dont_allow_space = dont_allow_space
         self.future = deque()
         self.eff_size= None
@@ -298,21 +365,27 @@ class Study:
     def has_std_err(self):
         return "se" in self.conf
 
-    def get_next_data(self, just_one =False) -> List[VariantData]:
+    def get_next_data(self, just_one: bool = False) -> List[VariantData]:
         """
-            Returns a list of variants. List containts >1 elements if they are on the same position and just_one ==False.
-            args:
+            Returns a list of variants. List containts >1 elements if they are on the same position and just_one == False.
+
+            input:
                 just_one: always returns only the next variant in order and not all next with the same position
-            returns: list of next variants
+            output:
+                list of next variants
         """
-        if len(self.future)>0:
-            ## only return variants with same position so that possible next variant position stored stays
-            f = [ (i,v) for i,v in enumerate(self.future) if i==0 or (v.chr==self.future[i-1].chr and  v.pos==self.future[i-1].pos) ]
-            for i,v in reversed(f):
-                 del self.future[i]
-            return [ v for i,v in f ]
 
         vars = list()
+
+        if len(self.future)>0:
+            ## only return variants with same position so that possible next variant position stored stays
+            f = [ (i,v) for i,v in enumerate(self.future) if i==0 or (v.chr==self.future[0].chr and v.pos==self.future[0].pos) ]
+            for i,v in reversed(f):
+                del self.future[i]
+            vars.extend([ v for i,v in f ])
+            if len(self.future)>0:
+                return vars
+
         while True:
             chr = None
             ref = None
@@ -322,13 +395,14 @@ class Study:
             while chr is None or chr not in chrord or (self.chrom is not None and chr != self.chrom) or re_allele.match(ref) is None or re_allele.match(alt) is None:
                 l = self.conf["fpoint"].readline()
                 if l=="":
-                    return None
+                    return None if len(vars) == 0 else vars
 
                 if self.dont_allow_space:
                     l = l.rstrip().split('\t')
                 else:
                     l = l.rstrip().split()
-                chr = l[self.conf["h_idx"]["chr"]].replace("chr", "")
+                chr = l[self.conf["h_idx"]["chr"]]
+                chr = chrord[chr] if chr in chrord else None
                 ref = l[self.conf["h_idx"]["ref"]]
                 alt = l[self.conf["h_idx"]["alt"]]
 
@@ -351,7 +425,6 @@ class Study:
             if( effect_type=="or" and eff):
                 eff = math.log(eff)
 
-            chr = chrord[chr]
             extracols = [ l[self.conf["h_idx"][c]] for c in self.conf["extra_cols"] ]
 
             v = VariantData(chr,pos,ref,alt, eff, pval, se, extracols)
@@ -362,8 +435,8 @@ class Study:
             if len(vars)==0 or ( vars[0].chr == v.chr and vars[0].pos == v.pos  ):
                 added=False
                 for v_ in vars:
-                    if v.is_equal(v_):
-                        print('ALREADY ADDED FOR STUDY ' + self.name + ': ' + str(v))
+                    if v == v_:
+                        print('ALREADY ADDED FOR STUDY ' + self.name + ': ' + str(v), file=sys.stderr)
                         added=True
                 if not added:
                     vars.append(v )
@@ -414,10 +487,17 @@ class Study:
         return None
 
 
-    def put_back(self, VariantData):
-        for m in VariantData:
-            ## the future in next position will be always kept last
-            self.future.appendleft(m)
+    def put_back(self, variantlist: List[VariantData]):
+        '''
+        Put list of variants back to wait for matching
+        
+        input:
+            variantlist: list of VariantData objects
+        output:
+            p-value
+        '''
+        
+        self.future.extendleft(variantlist)
 
 
 def get_studies(conf:str, chrom, dont_allow_space) -> List[Study]:
@@ -430,17 +510,31 @@ def get_studies(conf:str, chrom, dont_allow_space) -> List[Study]:
 
     return [ Study(s, chrom, dont_allow_space) for s in studies_conf["meta"]]
 
-def do_meta(study_list: List[ Tuple[Study, VariantData]], methods: List[str] ) -> List[float] :
+def do_meta(study_list: List[ Tuple[Study, VariantData]], methods: List[str], is_het_test) -> List[Tuple] :
     '''
         Computes meta-analysis between all studies and data given in the std_list
         input:
             study_list: studies and data in tuples
+            methods: list of methods to calculate
+            is_het_test: boolean, do heterogeneity test
         output:
-            list of  tuples (effect_size, p-value) for each method in the same order as methods were given
+            list of tuples (effect_size, standard error, p-value (, het test p-value)) for each method in the same order as methods were given
     '''
-    return [ SUPPORTED_METHODS[m](study_list) for m in methods ]
+    met = [ SUPPORTED_METHODS[m](study_list) for m in methods ]
 
-def format_num(num, precision=2):
+    meta_res = []
+    for m in met:
+        if m is not None:
+            if is_het_test:
+                meta_res.append((m[0], m[1], m[2], het_test(m[3], m[4], m[0])))
+            else:
+                meta_res.append((m[0], m[1], m[2]))
+        else:
+            meta_res.append(None)
+
+    return meta_res
+
+def format_num(num, precision=4):
     return numpy.format_float_scientific(num, precision=precision) if num is not None else "NA"
 
 def get_next_variant( studies : List[Study]) -> List[VariantData]:
@@ -472,12 +566,27 @@ def get_next_variant( studies : List[Study]) -> List[VariantData]:
             res.append(None)
             continue
 
-        for v in dats[i]:
-            if v.equalize_to(first):
+        # Flag tracks that only one variant (best match) is returned per study, if multiple variants equal to first
+        added=False
+        for j,v in reversed(list(enumerate(dats[i]))):
+            if v == first:
                 res.append(v)
-            else:
+                added=True
+                del dats[i][j]
+                s.put_back(dats[i])
+                break
+            if not v.is_equal(first):
                 s.put_back([v])
-        if len(res)<i+1:
+                del dats[i][j]
+        if not added:
+            for j,v in reversed(list(enumerate(dats[i]))):
+                if v.equalize_to(first):
+                    res.append(v)
+                    added=True
+                    del dats[i][j]
+                    break
+            s.put_back(dats[i])
+        if not added:
             res.append(None)
 
     return res
@@ -514,6 +623,9 @@ def run():
 
     parser.add_argument('--leave_one_out', action='store_true', help='Do leave-one-out meta-analysis')
     parser.set_defaults(leave_one_out=False)
+
+    parser.add_argument('--is_het_test', action='store_true', help='Do heterogeneity tests based on Cochrans Q and output het_p')
+    parser.set_defaults(het_test=False)
 
     parser.add_argument('--pairwise_with_first', action='store_true', help='Do pairwise meta-analysis with the first given study')
     parser.add_argument('--dont_allow_space', action='store_true', help='Do not allow space as field delimiter')
@@ -554,13 +666,19 @@ def run():
 
         out.write("\tall_meta_N")
         for m in methods:
-            out.write("\tall_"+m+"_meta_beta\tall_"+m+"_meta_sebeta\tall_"+  m +"_meta_p")
+            if args.is_het_test:
+                out.write("\tall_"+m+"_meta_beta\tall_"+m+"_meta_sebeta\tall_"+  m +"_meta_p\tall_"+ m +"_het_p")
+            else:
+                out.write("\tall_"+m+"_meta_beta\tall_"+m+"_meta_sebeta\tall_"+  m +"_meta_p")
 
         if args.leave_one_out:
             for s in studs:
                 out.write("\t" + "leave_" + s.name + "_N")
                 for m in methods:
-                    out.write( "\t" +  "\t".join( ["leave_" + s.name + "_" + m + "_meta_beta", "leave_" + s.name + "_" + m + "_meta_sebeta", "leave_" + s.name + "_" + m + "_meta_p"] ))
+                    if args.is_het_test:
+                        out.write( "\t" +  "\t".join( ["leave_" + s.name + "_" + m + "_meta_beta", "leave_" + s.name + "_" + m + "_meta_sebeta", "leave_" + s.name + "_" + m + "_meta_p", "leave_" + s.name + "_" + m + "_meta_het_p"] ))
+                    else:
+                        out.write( "\t" +  "\t".join( ["leave_" + s.name + "_" + m + "_meta_beta", "leave_" + s.name + "_" + m + "_meta_sebeta", "leave_" + s.name + "_" + m + "_meta_p"] ))
 
         out.write("\n")
 
@@ -580,7 +698,7 @@ def run():
 
             for i,_ in enumerate(studs):
                 if next_var[i] is not None:
-                    outdat.extend([format_num(next_var[i].beta), format_num(next_var[i].se), format_num(next_var[i].pval) ])
+                    outdat.extend([format_num(next_var[i].beta), format_num(next_var[i].se), format_num(next_var[i].pval, 3) ])
                     outdat.extend([ c for c in next_var[i].extra_cols ])
 
                     # meta analyse pairwise only with the leftmost study
@@ -588,41 +706,78 @@ def run():
                         continue
 
                     if next_var[0] is not None:
-                        met = do_meta( [(studs[0],next_var[0]), (studs[i],next_var[i])], methods=methods )
+                        met = do_meta( [(studs[0],next_var[0]), (studs[i],next_var[i])], methods=methods, is_het_test=args.is_het_test)
                         for m in met:
-                            outdat.append(format_num(m[0]))
-                            outdat.append(format_num(m[1]))
-                            outdat.append(format_num(m[2]))
+                            if args.is_het_test:
+                                outdat.extend([format_num(num) for num in m[0:2]])
+                                outdat.extend([format_num(num, 3) for num in m[2:4]])
+                            else:
+                                outdat.extend([format_num(num) for num in m[0:2]])
+                                outdat.extend(format_num(m[2], 3))
+
                     else:
-                        outdat.extend(["NA"] * len(methods) * 3)
+                        if args.is_het_test:
+                            outdat.extend(["NA"] * len(methods) * 4)
+                        else:
+                            outdat.extend(["NA"] * len(methods) * 3)
                 else:
-                    outdat.extend(['NA']  * (3 + len(studs[i].extra_cols) + (len(methods)*3 if args.pairwise_with_first and i>0 else 0) ) )
+                    outdat.extend(['NA'] * (3 + len(studs[i].extra_cols) + (len(methods)*3 if args.pairwise_with_first and i>0 else 0) ) )
 
+            meta_res = []
             if len( matching_studies )>1:
-                met = do_meta( matching_studies, methods=methods )
-                outdat.append( str(len(matching_studies)) )
-
+                met = do_meta( matching_studies, methods=methods, is_het_test=args.is_het_test )
                 for m in met:
-                    outdat.append( format_num(m[0]) )
-                    outdat.append( format_num(m[1]) )
-                    outdat.append( format_num(m[2]) )
-
+                    if m is not None:
+                        if args.is_het_test:
+                            meta_res.extend([format_num(num) for num in m[0:2]])
+                            meta_res.extend([format_num(num, 3) for num in m[2:4]])
+                        else:
+                            meta_res.extend([format_num(num) for num in m[0:2]])
+                            meta_res.extend(format_num(m[2], 3))
+                    else:
+                        if args.is_het_test:
+                            meta_res.extend(['NA'] * 4)
+                        else:
+                            meta_res.extend(['NA'] * 3)
             else:
-                outdat.append("1")
-                outdat.extend( [format_num(matching_studies[0][1].beta), format_num(matching_studies[0][1].se) , format_num(matching_studies[0][1].pval)]  * len(methods) )
+                if args.is_het_test:
+                    meta_res.extend( [format_num(matching_studies[0][1].beta), format_num(matching_studies[0][1].se) , format_num(matching_studies[0][1].pval, 3), 'NA']  * len(methods) )
+                else:
+                    meta_res.extend( [format_num(matching_studies[0][1].beta), format_num(matching_studies[0][1].se) , format_num(matching_studies[0][1].pval, 3)]  * len(methods) )
 
+            outdat.append( str(len(matching_studies)) )
+            outdat.extend(meta_res)
+            
             if args.leave_one_out:
                 for s,_ in enumerate(studs):
                     matching_studies_loo = [(studs[i], var) for i,var in enumerate(next_var) if s != i and var is not None]
                     outdat.append( str(len(matching_studies_loo)) )
                     if len(matching_studies_loo) > 1:
-                        met = do_meta( matching_studies_loo, methods=methods )
+                        met = do_meta( matching_studies_loo, methods=methods, is_het_test=args.is_het_test )
                         for m in met:
-                            outdat.append( format_num(m[0]) )
-                            outdat.append( format_num(m[1]) )
-                            outdat.append( format_num(m[2]) )
+                            if m is not None:
+                                if args.is_het_test:
+                                    outdat.extend([format_num(num) for num in m[0:2]])
+                                    outdat.extend([format_num(num, 3) for num in m[2:4]])
+                                else:
+                                    outdat.extend([format_num(num) for num in m[0:2]])
+                                    outdat.extend(format_num(m[2], 3))
+                            else:
+                                if args.is_het_test:
+                                    outdat.extend(['NA'] * 4)
+                                else:
+                                    outdat.extend(['NA'] * 3)
+
+                    elif len(matching_studies_loo) == 1:
+                        if args.is_het_test:
+                            outdat.extend( [format_num(matching_studies_loo[0][1].beta), format_num(matching_studies_loo[0][1].se) , format_num(matching_studies_loo[0][1].pval, 3), 'NA']  * len(methods) )
+                        else:
+                            outdat.extend( [format_num(matching_studies_loo[0][1].beta), format_num(matching_studies_loo[0][1].se) , format_num(matching_studies_loo[0][1].pval, 3)]  * len(methods) )
                     else:
-                        outdat.extend(['NA'] * 3 * len(methods))
+                        if args.is_het_test:
+                            outdat.extend(['NA'] * 4 * len(methods))
+                        else:
+                            outdat.extend(['NA'] * 3 * len(methods))
 
             out.write( "\t".join([ str(o) for o in outdat]) + "\n" )
 
@@ -639,3 +794,4 @@ def run():
 
 if __name__ == '__main__':
     run()
+    
