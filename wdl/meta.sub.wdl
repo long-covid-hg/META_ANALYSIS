@@ -180,11 +180,14 @@ task add_rsids_af {
 
                 af_total = 0
                 n_sum = 0
+                n_sum_af = 0
                 for i,idx in enumerate(af_idx):
                     if s[idx] != 'NA':
-                        af_total = af_total + float(s[idx]) * int(s[n_idx[i]])
+                        if float(s[idx]) != 0.5:
+                            af_total = af_total + float(s[idx]) * int(s[n_idx[i]])
+                            n_sum_af = n_sum_af + int(s[n_idx[i]])
                         n_sum = n_sum + int(s[n_idx[i]])
-                af_total = af_total / n_sum
+                af_total = af_total / n_sum_af
 
                 print(line + '\t' + str(n_sum) + '\t' + numpy.format_float_scientific(af_total, precision=3) + '\t' + rsid)
         EOF
