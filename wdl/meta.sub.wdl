@@ -35,9 +35,9 @@ task run_range {
         docker: "${docker}"
         cpu: "1"
         memory: "2 GB"
-        disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
-        preemptible: 0
+        disks: "local-disk 400 HDD"
+        zones: "us-east1-b"
+        preemptible: 2
         noAddress: true
     }
 }
@@ -53,7 +53,8 @@ task gather {
     String opts
     Int n_studies = length(summary_stats)
     Int n_pieces = length(meta_stats)
-    Int min_n_studies
+    Int min_n_eff
+    Int min_n_eff_x
     Int loglog_ylim
 
     command <<<
@@ -68,12 +69,24 @@ task gather {
         echo "n studies: ${n_studies}"
         printf "${sep='\n' summary_stats}\n"
 
+        echo "`date` checking eff size"
+        max_eff=`gunzip -c ${meta_stats[0]} | awk '
+        NR==1{for(i=1;i<=NF;i++) h[$i]=i; max_eff=0}
+        NR>1{if($h["all_inv_var_meta_effective"]>max_eff) max_eff=$h["all_inv_var_meta_effective"]}
+        END{print max_eff}'`
+        min_eff=$((max_eff*2/3))
+        max_eff_x=`gunzip -c ${meta_stats[22]} | awk '
+        NR==1{for(i=1;i<=NF;i++) h[$i]=i; max_eff=0}
+        NR>1{if($h["all_inv_var_meta_effective"]>max_eff) max_eff=$h["all_inv_var_meta_effective"]}
+        END{print max_eff}'`
+        min_eff_x=$((max_eff_x*2/3))
+
         echo "`date` gathering result pieces into one"
         cat <(gunzip -c ${meta_stats[0]} | head -1) \
             <(for file in ${sep=" " meta_stats}; do
-                  gunzip -c $file | awk '
+                  gunzip -c $file | awk -vmin_eff=$min_eff -vmin_eff_x=$min_eff_x '
                   NR==1 {for (i=1;i<=NF;i++) a[$i]=i}
-                  NR>1 && $a["all_meta_N"] >= ${min_n_studies}
+                  NR>1 && (($a["#CHR"]!=23 && $a["all_inv_var_meta_effective"] >= min_eff) || ($a["#CHR"]==23 && $a["all_inv_var_meta_effective"] >= min_eff_x))
                   ';
               done) \
         | bgzip > ${pheno}_${method}_meta.gz
@@ -82,9 +95,12 @@ task gather {
         gunzip -c ${pheno}_${method}_meta.gz | awk '
         BEGIN {FS=OFS="\t"}
         NR==1 {for(i=1;i<=NF;i++) a[$i]=i;}
-        {print $a["#CHR"],$a["POS"],$a["all_${method}_meta_p"]}
+        {print $a["#CHR"],$a["POS"],$a["SNP"],$a["all_${method}_meta_p"],$a["all_${method}_het_p"]}
         ' > ${pheno}_${method}_meta_p
+
+        cp ${pheno}_${method}_meta_p ${pheno}_${method}_meta_p_flag
         qqplot.R --file ${pheno}_${method}_meta_p --bp_col "POS" --chrcol "#CHR" --pval_col "all_${method}_meta_p" --loglog_ylim ${loglog_ylim}
+        qqplot.het.R --file ${pheno}_${method}_meta_p_flag --bp_col "POS" --chrcol "#CHR" --pval_col "all_${method}_meta_p" --snp_col "SNP" --loglog_ylim ${loglog_ylim}
 
         echo "`date` done"
 
@@ -100,8 +116,8 @@ task gather {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
-        preemptible: 0
+        zones: "us-east1-b"
+        preemptible: 2
         noAddress: true
     }
 }
@@ -117,6 +133,8 @@ task add_rsids_af {
 
     command <<<
 
+        echo "`date` adding rsids and af"
+
         python3 <<EOF | bgzip > ${base}.gz
 
         import gzip, numpy
@@ -125,7 +143,12 @@ task add_rsids_af {
         ref_has_lines = True
         ref_chr = 1
         ref_pos = 0
-        ref_h_idx = {h:i for i,h in enumerate(fp_ref.readline().strip().split('\t'))}
+        ref_line = fp_ref.readline()
+        while ref_line.startswith("##"):
+            ref_line = fp_ref.readline()
+        if ref_line.startswith('#'):
+            assert ref_line.rstrip('\r\n').split('\t') == '#CHROM POS ID REF ALT QUAL FILTER INFO'.split(), repr(ref_line)
+        ref_h_idx = {h:i for i,h in enumerate(ref_line.rstrip('\r\n').split('\t'))}
 
         with gzip.open('${file}', 'rt') as f:
             header = f.readline().strip()
@@ -149,36 +172,39 @@ task add_rsids_af {
                 alt = s[h_idx['ALT']]
                 ref_vars = []
                 while ref_has_lines and int(ref_chr) < chr or (int(ref_chr) == chr and ref_pos < pos):
-                    ref_line = fp_ref.readline().strip().split('\t')
+                    ref_line = fp_ref.readline().rstrip('\r\n').split('\t')
                     try:
-                        ref_chr = ref_line[ref_h_idx['#chr']]
-                        ref_pos = int(ref_line[ref_h_idx['pos']])
-                    except IndexError:
+                        ref_chr = ref_line[ref_h_idx['#CHROM']]
+                        ref_pos = int(ref_line[ref_h_idx['POS']])
+                    except ValueError:
                         ref_has_lines = False
                 while ref_has_lines and int(ref_chr) == chr and ref_pos == pos:
                     ref_vars.append(ref_line)
                     ref_line = fp_ref.readline().strip().split('\t')
                     try:
-                        ref_chr = ref_line[ref_h_idx['#chr']]
-                        ref_pos = int(ref_line[ref_h_idx['pos']])
-                    except IndexError:
+                        ref_chr = ref_line[ref_h_idx['#CHROM']]
+                        ref_pos = int(ref_line[ref_h_idx['POS']])
+                    except ValueError:
                         ref_has_lines = False
 
                 rsid = 'NA'
                 for r in ref_vars:
-                    if r[ref_h_idx['ref']] == ref and r[ref_h_idx['alt']] == alt:
-                        rsid = r[ref_h_idx['rsid']]
+                    if r[ref_h_idx['REF']] == ref and alt in r[ref_h_idx['ALT']].split(','):
+                        rsid = r[ref_h_idx['ID']]
                         break
 
                 af_total = 0
                 n_sum = 0
+                n_sum_af = 0
                 for i,idx in enumerate(af_idx):
                     if s[idx] != 'NA':
-                        af_total = af_total + float(s[idx]) * int(s[n_idx[i]])
+                        if float(s[idx]) != 0.5:
+                            af_total = af_total + float(s[idx]) * int(s[n_idx[i]])
+                            n_sum_af = n_sum_af + int(s[n_idx[i]])
                         n_sum = n_sum + int(s[n_idx[i]])
-                af_total = af_total / n_sum
+                af_total = af_total / n_sum_af if n_sum_af > 0 else 'NA'
 
-                print(line + '\t' + str(n_sum) + '\t' + numpy.format_float_scientific(af_total, precision=3) + '\t' + rsid)
+                print(line + '\t' + str(n_sum) + '\t' + (numpy.format_float_scientific(af_total, precision=3) if af_total != 'NA' else 'NA') + '\t' + rsid)
         EOF
 
         echo "`date` filtering p-value ${p_thresh}"
@@ -204,8 +230,8 @@ task add_rsids_af {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
-        preemptible: 0
+        zones: "us-east1-b"
+        preemptible: 2
         noAddress: true
     }
 }
@@ -231,7 +257,7 @@ task filter_cols {
         echo "`date` filtering columns"
         gunzip -c ${file} | awk '
         BEGIN {FS=OFS="\t"}
-        NR==1 {for(i=1;i<=NF;i++) { a[$i]=i; if (i<6||$i~"_AF_Allele2$"||$i~"_AF_fc$"||$i~"_N$"||$i~"^all_"||$i~"^rsid") use[i]=1 }}
+        NR==1 {for(i=1;i<=NF;i++) { a[$i]=i; if (i<6||($i~"^all_"&&$i!="all_meta_sample_N")||$i~"^rsid") use[i]=1 }}
         NR>=1 {printf $1; for(i=2;i<=NF;i++) if(use[i]==1) printf "\t"$i; printf "\n"}' | \
         bgzip > ${outfile}
 
@@ -259,8 +285,55 @@ task filter_cols {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
-        preemptible: 0
+        zones: "us-east1-b"
+        preemptible: 2
+        noAddress: true
+    }
+}
+
+task filter_variants {
+
+    File variant_shortlist
+    File file
+    String outfile = basename(file, ".txt.gz") + ".10k.txt.gz"
+    String docker
+
+    command <<<
+
+        python3 <<EOF | bgzip > ${outfile}
+
+        import gzip
+
+        variants = {}
+        with open('${variant_shortlist}', 'rt') as f:
+            for line in f:
+                s = line.strip().split(' ')
+                variants[s[1]+':'+s[2]+':'+s[3]+':'+s[4]] = True
+
+        with gzip.open('${file}', 'rt') as f:
+            header = f.readline().strip()
+            snp_col = header.split('\t').index('SNP')
+            print(header)
+            for line in f:
+                line = line.strip()
+                s = line.split('\t')
+                if s[snp_col] in variants:
+                    print(line)
+        EOF
+
+    >>>
+
+    output {
+        File out = outfile
+    }
+
+    runtime {
+        docker: "${docker}"
+        cpu: "1"
+        memory: "10 GB"
+        disks: "local-disk 200 HDD"
+        zones: "us-east1-b"
+        preemptible: 2
         noAddress: true
     }
 }
@@ -331,8 +404,8 @@ task lift {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
-        preemptible: 0
+        zones: "us-east1-b"
+        preemptible: 2
         noAddress: true
     }
 }
@@ -340,7 +413,9 @@ task lift {
 workflow run_meta {
 
     String pheno
-    Int min_n_studies
+    #Int min_n_studies
+    Int min_n_eff
+    Int min_n_eff_x
     String conf
     String method
     String opts
@@ -353,7 +428,7 @@ workflow run_meta {
     }
 
     call gather {
-        input: pheno=pheno, method=method, opts=opts, conf=conf, summary_stats=summary_stats, meta_stats=run_range.out, min_n_studies=min_n_studies
+        input: pheno=pheno, method=method, opts=opts, conf=conf, summary_stats=summary_stats, meta_stats=run_range.out, min_n_eff=min_n_eff, min_n_eff_x=min_n_eff_x
     }
 
     call add_rsids_af {
@@ -364,7 +439,15 @@ workflow run_meta {
         input: pheno=pheno, file=add_rsids_af.out, method=method
     }
 
+    call filter_variants {
+        input: file=filter_cols.out
+    }
+
     call lift {
         input: file=filter_cols.out, method=method
+    }
+
+    call lift as lift_10k {
+        input: file=filter_variants.out, method=method
     }
 }
