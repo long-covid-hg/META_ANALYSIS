@@ -12,7 +12,7 @@ workflow meta_analysis {
     scatter (i in range(length(pheno))) {
         String conf = sub(conf_template, "\\{PHENO\\}", pheno[i][0])
         call sub.run_meta {
-            input: pheno = pheno[i][0], min_n_studies = pheno[i][1], conf = conf, summary_stats = summary_stats[i]
+            input: pheno = pheno[i][0], min_n_eff = pheno[i][1], min_n_eff_x = pheno[i][2], conf = conf, summary_stats = summary_stats[i]
         }
     }
 }

@@ -170,7 +170,7 @@ def create_meta_conf(studies):
         with open('json/{}.json'.format(analysis), 'wt') as f:
             json.dump({'meta': conf[analysis]}, f, indent=4)
         leave_ukbb = [cohort for cohort in conf[analysis] if not cohort['name'].lower().startswith('ukbb')]
-        with open('json/{}_leave_UKBB.json'.format(analysis), 'wt') as f:
+        with open('json/{}_leave_ukbb.json'.format(analysis), 'wt') as f:
             json.dump({'meta': leave_ukbb}, f, indent=4)
         leave_genomicc = [cohort for cohort in conf[analysis] if not cohort['name'].lower().startswith('genomicc')]
         with open('json/{}_leave_genomicc.json'.format(analysis), 'wt') as f:
@@ -179,7 +179,7 @@ def create_meta_conf(studies):
         with open('json/{}_leave_23andme.json'.format(analysis), 'wt') as f:
             json.dump({'meta': leave_23andme}, f, indent=4)
         leave_ukbb23andme = [cohort for cohort in conf[analysis] if not cohort['name'].lower().startswith('23andme') and not cohort['name'].lower().startswith('ukbb')]
-        with open('json/{}_leave_UKBB_23andme.json'.format(analysis), 'wt') as f:
+        with open('json/{}_leave_ukbb_23andme.json'.format(analysis), 'wt') as f:
             json.dump({'meta': leave_ukbb23andme}, f, indent=4)
         leave_prs = [cohort for cohort in conf[analysis] if not (
             cohort['name'].lower().startswith('hostage') or
@@ -193,9 +193,27 @@ def create_meta_conf(studies):
             )]
         with open('json/{}_leave_prs.json'.format(analysis), 'wt') as f:
             json.dump({'meta': leave_prs}, f, indent=4)
-        admixed = [cohort for cohort in conf[analysis] if cohort['name'].endswith('_AFR') or cohort['name'].endswith('_HIS') or cohort['name'].endswith('AMR')]
+        admixed = [cohort for cohort in conf[analysis] if (cohort['name'].endswith('_AFR') and not cohort['name'].startswith('Egypt_hgCOVID')) or cohort['name'].endswith('_HIS') or cohort['name'].endswith('AMR')]
+        admixed_leave23andme = [cohort for cohort in admixed if not cohort['name'].lower().startswith('23andme')]
         with open('json/{}_admixed.json'.format(analysis), 'wt') as f:
             json.dump({'meta': admixed}, f, indent=4)
+        with open('json/{}_admixed_leave_23andme.json'.format(analysis), 'wt') as f:
+            json.dump({'meta': admixed_leave23andme}, f, indent=4)
+        his = [cohort for cohort in conf[analysis] if cohort['name'].endswith('_HIS') or cohort['name'].endswith('AMR')]
+        his_leave23andme = [cohort for cohort in his if not cohort['name'].lower().startswith('23andme')]
+        with open('json/{}_his.json'.format(analysis), 'wt') as f:
+            json.dump({'meta': his}, f, indent=4)
+        with open('json/{}_his_leave_23andme.json'.format(analysis), 'wt') as f:
+            json.dump({'meta': his_leave23andme}, f, indent=4)
+        afr = [cohort for cohort in conf[analysis] if cohort['name'].endswith('_AFR') and not cohort['name'].startswith('Egypt_hgCOVID')]
+        afr_leave23andme = [cohort for cohort in afr if not cohort['name'].lower().startswith('23andme')]
+        with open('json/{}_afr.json'.format(analysis), 'wt') as f:
+            json.dump({'meta': afr}, f, indent=4)
+        with open('json/{}_afr_leave_23andme.json'.format(analysis), 'wt') as f:
+            json.dump({'meta': afr_leave23andme}, f, indent=4)
+        eas = [cohort for cohort in conf[analysis] if cohort['name'].endswith('_EAS') and not cohort['name'].startswith('CHULA')]
+        with open('json/{}_eas.json'.format(analysis), 'wt') as f:
+            json.dump({'meta': eas}, f, indent=4)
         eur = [cohort for cohort in conf[analysis] if cohort['name'].endswith('_EUR') or cohort['name'].endswith('_FIN')]
         with open('json/{}_eur.json'.format(analysis), 'wt') as f:
             json.dump({'meta': eur}, f, indent=4)

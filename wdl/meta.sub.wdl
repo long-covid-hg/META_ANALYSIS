@@ -36,7 +36,7 @@ task run_range {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 400 HDD"
-        zones: "us-east1-d"
+        zones: "us-east1-b"
         preemptible: 2
         noAddress: true
     }
@@ -53,7 +53,8 @@ task gather {
     String opts
     Int n_studies = length(summary_stats)
     Int n_pieces = length(meta_stats)
-    Int min_n_studies
+    Int min_n_eff
+    Int min_n_eff_x
     Int loglog_ylim
 
     command <<<
@@ -68,12 +69,24 @@ task gather {
         echo "n studies: ${n_studies}"
         printf "${sep='\n' summary_stats}\n"
 
+        echo "`date` checking eff size"
+        max_eff=`gunzip -c ${meta_stats[0]} | awk '
+        NR==1{for(i=1;i<=NF;i++) h[$i]=i; max_eff=0}
+        NR>1{if($h["all_inv_var_meta_effective"]>max_eff) max_eff=$h["all_inv_var_meta_effective"]}
+        END{print max_eff}'`
+        min_eff=$((max_eff*2/3))
+        max_eff_x=`gunzip -c ${meta_stats[22]} | awk '
+        NR==1{for(i=1;i<=NF;i++) h[$i]=i; max_eff=0}
+        NR>1{if($h["all_inv_var_meta_effective"]>max_eff) max_eff=$h["all_inv_var_meta_effective"]}
+        END{print max_eff}'`
+        min_eff_x=$((max_eff_x*2/3))
+
         echo "`date` gathering result pieces into one"
         cat <(gunzip -c ${meta_stats[0]} | head -1) \
             <(for file in ${sep=" " meta_stats}; do
-                  gunzip -c $file | awk '
+                  gunzip -c $file | awk -vmin_eff=$min_eff -vmin_eff_x=$min_eff_x '
                   NR==1 {for (i=1;i<=NF;i++) a[$i]=i}
-                  NR>1 && $a["all_meta_N"] >= ${min_n_studies}
+                  NR>1 && (($a["#CHR"]!=23 && $a["all_inv_var_meta_effective"] >= min_eff) || ($a["#CHR"]==23 && $a["all_inv_var_meta_effective"] >= min_eff_x))
                   ';
               done) \
         | bgzip > ${pheno}_${method}_meta.gz
@@ -103,7 +116,7 @@ task gather {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-east1-b"
         preemptible: 2
         noAddress: true
     }
@@ -119,6 +132,8 @@ task add_rsids_af {
     String docker
 
     command <<<
+
+        echo "`date` adding rsids and af"
 
         python3 <<EOF | bgzip > ${base}.gz
 
@@ -187,9 +202,9 @@ task add_rsids_af {
                             af_total = af_total + float(s[idx]) * int(s[n_idx[i]])
                             n_sum_af = n_sum_af + int(s[n_idx[i]])
                         n_sum = n_sum + int(s[n_idx[i]])
-                af_total = af_total / n_sum_af
+                af_total = af_total / n_sum_af if n_sum_af > 0 else 'NA'
 
-                print(line + '\t' + str(n_sum) + '\t' + numpy.format_float_scientific(af_total, precision=3) + '\t' + rsid)
+                print(line + '\t' + str(n_sum) + '\t' + (numpy.format_float_scientific(af_total, precision=3) if af_total != 'NA' else 'NA') + '\t' + rsid)
         EOF
 
         echo "`date` filtering p-value ${p_thresh}"
@@ -215,7 +230,7 @@ task add_rsids_af {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-east1-b"
         preemptible: 2
         noAddress: true
     }
@@ -242,7 +257,7 @@ task filter_cols {
         echo "`date` filtering columns"
         gunzip -c ${file} | awk '
         BEGIN {FS=OFS="\t"}
-        NR==1 {for(i=1;i<=NF;i++) { a[$i]=i; if (i<6||$i~"_AF_Allele2$"||$i~"_AF_fc$"||$i~"_N$"||$i~"^all_"||$i~"^rsid") use[i]=1 }}
+        NR==1 {for(i=1;i<=NF;i++) { a[$i]=i; if (i<6||($i~"^all_"&&$i!="all_meta_sample_N")||$i~"^rsid") use[i]=1 }}
         NR>=1 {printf $1; for(i=2;i<=NF;i++) if(use[i]==1) printf "\t"$i; printf "\n"}' | \
         bgzip > ${outfile}
 
@@ -270,7 +285,7 @@ task filter_cols {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-east1-b"
         preemptible: 2
         noAddress: true
     }
@@ -317,7 +332,7 @@ task filter_variants {
         cpu: "1"
         memory: "10 GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
+        zones: "us-east1-b"
         preemptible: 2
         noAddress: true
     }
@@ -389,7 +404,7 @@ task lift {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-d"
+        zones: "us-east1-b"
         preemptible: 2
         noAddress: true
     }
@@ -398,7 +413,9 @@ task lift {
 workflow run_meta {
 
     String pheno
-    Int min_n_studies
+    #Int min_n_studies
+    Int min_n_eff
+    Int min_n_eff_x
     String conf
     String method
     String opts
@@ -411,7 +428,7 @@ workflow run_meta {
     }
 
     call gather {
-        input: pheno=pheno, method=method, opts=opts, conf=conf, summary_stats=summary_stats, meta_stats=run_range.out, min_n_studies=min_n_studies
+        input: pheno=pheno, method=method, opts=opts, conf=conf, summary_stats=summary_stats, meta_stats=run_range.out, min_n_eff=min_n_eff, min_n_eff_x=min_n_eff_x
     }
 
     call add_rsids_af {
