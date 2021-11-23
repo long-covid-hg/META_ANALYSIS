@@ -1,5 +1,16 @@
 # COVID-19 HGI META ANALYSIS workflow for long COVID freeze 1
 
+1. ssh connect from [here](https://console.cloud.google.com/compute/instances?onCreate=true&project=long-covid-hg&cloudshell=false) 
+
+2. get root access + install several packages
+
+```
+sudo su
+apt-get install wget
+apt-get install git
+...
+```
+
 This repository is used for COVID-19 Host Genetics Initiative GWAS meta-analysis. [WDL](https://github.com/openwdl/wdl) workflows and Google Compute Engine are used for computing. The workflows consist of cleaning/munging input files to the same format and running a meta-analysis.
 
 1. The WDL workflow in [wdl/munge_sumstats.wdl](wdl/munge_sumstats.wdl) and [wdl/munge_sumstats.json](wdl/munge_sumstats.json) is used to filter and convert submitted SAIGE summary stat files to a unified format. INFO and AF filtering are done to the each summary stat file. Stats in build 37 are automatically lifted to build 38. Alleles are harmonized (matching ref/alt alleles, effect direction) using gnomAD 3.0 genomes as reference and fold change of AF to gnomAD AF for the population is added to the stats. Chromosomes are renamed so that e.g. "chr1" and "01" become "1" and "X" becomes "23". Scientific notation is converted to decimal notation for base pair positions. The output of this step is for each study a [bgzipped](http://www.htslib.org/doc/bgzip.html) tab-delimited summary stat file and its [tabix](http://www.htslib.org/doc/tabix.html) index, as well as manhattan and qq plots and AF-gnomAD_AF plots.
