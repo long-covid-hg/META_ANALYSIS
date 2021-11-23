@@ -1,5 +1,5 @@
-# META ANALYSIS tools
-Tools for doing x way meta-analysis
+### META ANALYSIS pipeline for long COVID freeze 1
+
 
 # COVID-19 HGI meta-analysis workflow
 
