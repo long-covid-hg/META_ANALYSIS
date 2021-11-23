@@ -1,5 +1,6 @@
 {
-    "munge_sumstats.sumstats_loc": "gs://covid19-hg-analysis/20210415/conf/munge_20210601.txt",
+    "munge_sumstats.sumstats_loc": "gs://covid19-hg-analysis/20211123/conf/munge_20211123.txt",
+    #######################
     "munge_sumstats.gnomad_ref_template": "gs://covid19-hg-analysis/gnomad/v3/filter/gnomad_v3_b38_ref_POP.gz",
     "munge_sumstats.clean_filter.docker": "gcr.io/covid-19-hg/saige:0.36.3.2-2",
     "munge_sumstats.clean_filter.af_col": "AF_Allele2",
