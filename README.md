@@ -1,4 +1,4 @@
-### META ANALYSIS pipeline for long COVID freeze 1
+# META ANALYSIS pipeline for long COVID freeze 1
 
 
 # COVID-19 HGI meta-analysis workflow
