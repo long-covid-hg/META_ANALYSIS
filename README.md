@@ -1,7 +1,4 @@
-# META ANALYSIS pipeline for long COVID freeze 1
-
-
-# COVID-19 HGI meta-analysis workflow
+# COVID-19 HGI META ANALYSIS workflow for long COVID freeze 1
 
 This repository is used for COVID-19 Host Genetics Initiative GWAS meta-analysis. [WDL](https://github.com/openwdl/wdl) workflows and Google Compute Engine are used for computing. The workflows consist of cleaning/munging input files to the same format and running a meta-analysis.
 
