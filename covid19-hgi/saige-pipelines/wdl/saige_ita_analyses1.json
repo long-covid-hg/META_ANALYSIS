@@ -1,0 +1,28 @@
+{
+    "saige.docker": "eu.gcr.io/covid19-hgi-ganna/saige:0.39.4",
+    "saige.phenolistfile": "gs://dsge-covid19-data/ita_be_swe_14082020/phenolist_analyses1",
+    "saige.traitType": "binary",
+    "saige.loco": "FALSE",
+    "saige.analysisType": "additive",
+
+    "saige.null.bedfile": "gs://dsge-covid19-data/ita_be_swe_14082020/GRM/chr1_22.grm.italy.bed",
+    "saige.null.phenofile": "gs://dsge-covid19-data/ita_be_swe_14082020/ita_cov_pheno.txt",
+    "saige.null.covariates": "Age,Sex,AgeSex,Age2,PC1,PC2,PC3,PC4,PC5,PC6,PC7,PC8,PC9,PC10,PC11,PC12,PC13,PC14,PC15,PC16,PC17,PC18,PC19,PC20",
+    "saige.null.sampleID": "ID",
+    "saige.null.traceCVcutoff": 0.0025,
+    "saige.null.ratioCVcutoff": 0.001,
+    "saige.null.minCovariateCount": 10,
+
+    "saige.test_combine.bgenlistfile": "gs://dsge-covid19-data/ita_be_swe_14082020/bgen_pieces.txt",
+
+    "saige.test_combine.test.samplefile": "gs://dsge-covid19-data/ita_be_swe_14082020/ita_be_swe_14082020.samples.txt",
+    "saige.test_combine.test.sampleid_males": "gs://dsge-covid19-data/ita_14082020/ita_males.txt",
+    "saige.test_combine.test.minmac": 5,
+
+    "saige.test_combine.combine.blacklist": "gs://dsge-covid19-data/ita_14082020/nullfile.txt",
+    "saige.test_combine.combine.info_threshold": 0.6,
+    "saige.test_combine.combine.chrcol": "#chrom",
+    "saige.test_combine.combine.p_valcol": "pval",
+    "saige.test_combine.combine.bp_col": "pos",
+    "saige.test_combine.combine.loglog_pval": 10
+}

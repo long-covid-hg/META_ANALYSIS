@@ -1,0 +1,19 @@
+{
+    "convert_plink.chrom_list":  ["20","21"],
+    "convert_plink.disk_factor": 4,
+    "convert_plink.pargs": "  --allow-extra-chr --max-alleles 2 ",
+    "convert_plink.docker": "eu.gcr.io/finngen-refinery-dev/convert_vcf:r5-plink",
+    "convert_plink.name": "R6_test",
+
+    #CONVERSION
+    "convert_plink.chrom_convert.mem": 32,
+    "convert_plink.chrom_convert.cpu": 32,
+    "convert_plink.chrom_convert.chromPath": "gs://r5_data/convert/vcf/finngen_R5_chrCHROM.vcf.gz",
+    "convert_plink.chrom_convert.pargs": "  --allow-extra-chr --max-alleles 2 ",
+
+    #MERGING
+    "convert_plink.merge_plink.pargs": "--allow-extra-chr --biallelic-only strict --keep-allele-order",
+    "convert_plink.chrom_convert.cpu": 32,
+    "convert_plink.merge_plink.mem": 32,
+}
+
