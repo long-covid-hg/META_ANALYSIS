@@ -83,7 +83,7 @@ task clean_filter {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -152,7 +152,7 @@ task lift {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -196,7 +196,7 @@ task harmonize {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -260,7 +260,7 @@ task flip_mahalanobis {
         # TODO memory by file size
         memory: "20 GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -310,7 +310,7 @@ task plot {
         cpu: "1"
         memory: 10*ceil(size(sumstat_file, "G")) + " GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
