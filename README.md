@@ -24,7 +24,11 @@ docker tag gcr.io/covid-19-hg/plots:0.2 gcr.io/long-covid-hg/plots:0.2
 gcloud docker -- push gcr.io/long-covid-hg/plots:0.2
 ```
 
-### 3.1. running munge_sumstats.wdl
+### 2.3 format checking
+
+Need to make sure all sumstats are SAIGE format.  use `scripts/format/*.sh` if you need to modify.
+
+### 2.4. running munge_sumstats.wdl
 ```
 lsof -ti:5000 | xargs kill -9
 covid19-hgi/CromwellInteract-master/cromwell_interact.py connect long-covid-hg-cromwell 
