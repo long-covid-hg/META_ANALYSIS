@@ -7,7 +7,7 @@
 `gcloud compute ssh --ssh-flag="-X" long-covid-hg-cromwell --zone us-central1-b`
 
 ## 2. META-ANALYSIS
-Mainly adopted from the HGI meta-analyses
+Mainly adopted from the [main HGI meta-analyses](https://github.com/covid19-hg/META_ANALYSIS)
 
 ### 2.1. set up google VM cromwell (see cromwell_google_setup repository)
 
