@@ -13,6 +13,8 @@ Mainly adopted from the [main HGI meta-analyses](https://github.com/covid19-hg/M
 
 ### 2.2. pull docker image from main covid-19-hg project
 
+pulled images
+`saige:0.36.3.2-2` `meta:1d50c` `plots:0.2`
 example
 ```
 gcloud docker -- pull gcr.io/covid-19-hg/plots:0.2
