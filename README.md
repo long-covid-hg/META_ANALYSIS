@@ -28,5 +28,9 @@ gcloud docker -- push gcr.io/long-covid-hg/plots:0.2
 ```
 lsof -ti:5000 | xargs kill -9
 covid19-hgi/CromwellInteract-master/cromwell_interact.py connect long-covid-hg-cromwell 
-python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py submit --wdl wdl/munge_sumstats.wdl --inputs wdl/munge_sumstats.json
+python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py \
+submit --wdl wdl/munge_sumstats.wdl \
+--inputs wdl/munge_sumstats.json
+covid19-hgi/CromwellInteract-master/cromwell_interact.py metadata \
+${JOBID} --failed_jobs
 ```
