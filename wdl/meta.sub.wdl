@@ -36,7 +36,7 @@ task run_range {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 400 HDD"
-        zones: "us-east1-b"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -116,7 +116,7 @@ task gather {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-b"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -230,7 +230,7 @@ task add_rsids_af {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-b"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -285,7 +285,7 @@ task filter_cols {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-b"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -332,7 +332,7 @@ task filter_variants {
         cpu: "1"
         memory: "10 GB"
         disks: "local-disk 200 HDD"
-        zones: "us-east1-b"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -404,7 +404,7 @@ task lift {
         cpu: "1"
         memory: "20 GB"
         disks: "local-disk 200 SSD"
-        zones: "us-east1-b"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
