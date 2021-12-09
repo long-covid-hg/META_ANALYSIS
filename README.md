@@ -40,3 +40,21 @@ submit --wdl wdl/munge_sumstats.wdl \
 covid19-hgi/CromwellInteract-master/cromwell_interact.py metadata \
 ${JOBID} --failed_jobs
 ```
+
+### 2.5 make {PHENO}.json files
+
+### 2.6 make `ALL.phenos.*.txt` and `ALL.files.*.txt` The order of the rows need to be concordant between two files.
+
+```
+cat W2.3_ALL.json | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' > ALL.files.1.txt
+cat W1.3_ALL.json | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' >> ALL.files.1.txt
+cat N2.3_ALL.json  | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' >> ALL.files.1.txt
+cat N1.3_ALL.json  | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' >> ALL.files.1.txt
+```
+
+### 2.7 run meta analyses
+
+```
+python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py submit --wdl wdl/meta.wdl --inputs wdl/meta.json  --deps wdl/meta.sub.zip
+```
+
