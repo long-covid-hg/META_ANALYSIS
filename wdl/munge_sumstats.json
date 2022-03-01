@@ -1,5 +1,5 @@
 {
-    "munge_sumstats.sumstats_loc": "gs://long-covid-hg-cromwell/20211123/conf/munge_20211123.txt",
+    "munge_sumstats.sumstats_loc": "gs://long-covid-hg-cromwell/20211123/conf/munge_20220214.txt",
     "munge_sumstats.gnomad_ref_template": "gs://long-covid-hg-cromwell/gnomad/v3/filter/gnomad_v3_b38_ref_POP.gz",
     "munge_sumstats.clean_filter.docker": "gcr.io/long-covid-hg/saige:0.36.3.2-2",
     "munge_sumstats.clean_filter.af_col": "AF_Allele2",

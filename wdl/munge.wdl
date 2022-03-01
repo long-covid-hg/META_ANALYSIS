@@ -427,7 +427,7 @@ task harmonize {
         mv ~{gnomad_ref} ~{gnomad_ref_base}
 
         echo "`date` harmonizing stats with gnomAD"
-        python3 /META_ANALYSIS/scripts/harmonize.py ~{base} ~{gnomad_ref_base} ~{options} \
+        python3 /META_ANALYSIS/scripts/harmonize.py ~{base} ~{gnomad_ref_base} 0 ~{options} \
         | bgzip > ~{base}.~{gnomad_ref_base}
         
         tabix -s 1 -b 2 -e 2 ~{base}.~{gnomad_ref_base}

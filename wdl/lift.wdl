@@ -194,13 +194,6 @@ task lift_postprocess {
     input {
         File lifted_vcf
         File sumstat_file
-        String delim
-        String chr_col
-        String pos_col
-        String ref_col
-        String alt_col
-        String af_col
-        String beta_col
 
         String docker
 
@@ -209,7 +202,7 @@ task lift_postprocess {
 
     command <<<
 
-        set -euxo pipefail
+        set -eux
 
         # Sort by old positions
         grep -v "^#" ~{lifted_vcf} | tr ":" "\t" | awk '
@@ -217,21 +210,24 @@ task lift_postprocess {
         { gsub("chr", ""); gsub("X", "23"); gsub("Y", "24"); print $1,$2,$7,$8,$3,$4,$5,$6,$11 }
         ' | sort -k5,5g -k6,6g > ~{base}.tsv
 
-        python3 <<EOF | sort -k1,1g -k2,2g | bgzip > ~{base}.tsv.gz
+        chr_col=$(zcat ~{sumstat_file} | head -1 | tr '\t ' '\n' | grep -nwF "#CHR" | head -1 | cut -d ':' -f1)
+        pos_col=$(zcat ~{sumstat_file} | head -1 | tr '\t ' '\n' | grep -nwF "POS" | head -1 | cut -d ':' -f1)
+
+        python3 <<EOF | sort -k$chr_col,${chr_col}g -k$pos_col,${pos_col}g | bgzip > ~{base}.tsv.gz
 
         import gzip
         from collections import defaultdict
 
-        valid_chrs = [str(i) for i in range(1,25)]
+        valid_chrs = set([str(i) for i in range(1,25)])
 
-        sumstat = "~{sumstat_file}"
-        delim = "~{delim}"
-        chr_col = "~{chr_col}"
-        pos_col = "~{pos_col}"
-        ref_col = "~{ref_col}"
-        alt_col = "~{alt_col}"
-        af_col = "~{af_col}"
-        beta_col = "~{beta_col}"
+        sumstat = '~{sumstat_file}'
+        delim = '\t'
+        chr_col = '#CHR'
+        pos_col = 'POS'
+        ref_col = 'REF'
+        alt_col = 'ALT'
+        af_col = 'af_alt'
+        beta_col = 'beta'
 
         s_f = gzip.open(sumstat, 'rt')
         sumstat_header = s_f.readline().strip().split(delim)
@@ -282,14 +278,14 @@ task lift_postprocess {
                     try:
                         sumstat_chr = int(sumstat_line[sumstat_h_idx[chr_col]].replace('chr', '').replace('X', '23').replace('Y', '24'))
                         sumstat_pos = int(sumstat_line[sumstat_h_idx[pos_col]])
-                    except ValueError:
+                    except (IndexError, ValueError):
                         break
                     sumstat_ref = sumstat_line[sumstat_h_idx[ref_col]]
                     sumstat_alt = sumstat_line[sumstat_h_idx[alt_col]]
 
         EOF
 
-        tabix -S 1 -s 1 -b 2 -e 2 ~{base}.tsv.gz
+        tabix -S 1 -s $chr_col -b $pos_col -e $pos_col ~{base}.tsv.gz
 
     >>>
 
@@ -308,3 +304,4 @@ task lift_postprocess {
         noAddress: true
     }
 }
+

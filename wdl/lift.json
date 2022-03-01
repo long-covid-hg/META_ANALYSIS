@@ -1,16 +1,16 @@
 {
-    "liftover.sumstats_loc": "gs://long-covid-hg-cromwell/20211123/conf/munge_20211123.txt",
-    "liftover.delim": " ",
+    "liftover.sumstats_loc": "gs://long-covid-hg-cromwell/20211123/conf/tmp.txt",
+    "liftover.delim": "\t",
     "liftover.chr_col": "CHR",
     "liftover.pos_col": "POS",
     "liftover.ref_col": "Allele1",
     "liftover.alt_col": "Allele2",
     "liftover.af_col": "AF_Allele2",
     "liftover.beta_col": "BETA",
-    "liftover.sumstat_to_vcf.docker": "eu.gcr.io/long-covid-hg/bioinformatics:0.7",
-    "liftover.lift.docker": "eu.gcr.io/long-covid-hg/picard:2.25.6",
-    "liftover.lift.chainfile": "gs://juham-fg/lift/chainfiles/hg19ToHg38.over.chain.gz",
+    "liftover.sumstat_to_vcf.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
+    "liftover.lift.docker": "gcr.io/long-covid-hg/picard:2.25.6.tabix",
+    "liftover.lift.chainfile": "gs://long-covid-hg-cromwell/recomb_map/hg19ToHg38.over.chain.gz",
     "liftover.lift.b38_assembly_fasta": "gs://genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta",
     "liftover.lift.b38_assembly_dict": "gs://genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.dict",
-    "liftover.lift_postprocess.docker": "eu.gcr.io/long-covid-hg/bioinformatics:0.7"
+    "liftover.lift_postprocess.docker": "gcr.io/long-covid-hg/bioinformatics:0.7"
 }
