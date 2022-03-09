@@ -1,5 +1,5 @@
 {
-    "munge.sumstats_loc": "gs://long-covid-hg-cromwell/20211123/conf/tmp.txt",
+    "munge.sumstats_loc": "gs://long-covid-hg-cromwell/20220301/conf/step2_munge.txt",
     "munge.clean_filter.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
     "munge.clean_filter.chr_col": "CHR",
     "munge.clean_filter.pos_col": "POS",
@@ -16,7 +16,7 @@
     "munge.lift.b38_assembly_dict": "gs://genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.dict",
     "munge.lift_postprocess.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
     "munge.harmonize.docker": "gcr.io/long-covid-hg/meta:7.42",
-    "munge.harmonize.gnomad_ref": "gs://long-covid-hg-cromwell/gnomad/v3/filter/gnomad_v3_b38_ref_nfe.gz",
+    "munge.gnomad_ref_template": "gs://long-covid-hg-cromwell/gnomad/v3/filter/gnomad_v3_b38_ref_POP.gz",
     "munge.harmonize.options": "--pre_aligned",
     "munge.plot.docker": "gcr.io/long-covid-hg/meta:7.42",
     "munge.plot.loglog_ylim": 10

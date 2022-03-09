@@ -4,12 +4,13 @@ workflow munge {
 
     input {
         File sumstats_loc
-        Array[String] sumstat_files = read_lines(sumstats_loc)
+        Array[Array[String]] sumstat_files = read_tsv(sumstats_loc)
+        String gnomad_ref_template
     }
 
     scatter (sumstat_file in sumstat_files) {
         call clean_filter {
-            input: sumstat_file=sumstat_file
+            input: sumstat_file=sumstat_file[0]
         }
         call sumstat_to_vcf {
             input: sumstat_file=clean_filter.out
@@ -23,7 +24,7 @@ workflow munge {
                 sumstat_file=clean_filter.out
         }
         call harmonize {
-            input: sumstat_file=lift_postprocess.lifted_variants
+            input: sumstat_file=lift_postprocess.lifted_variants, gnomad_ref=sub(gnomad_ref_template, "POP", sumstat_file[1])
         }
         call plot {
             input: sumstat_file=harmonize.out
@@ -142,7 +143,7 @@ task clean_filter {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk " + 5*ceil(size(sumstat_file, "G")) + " HDD"
-        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -205,6 +206,14 @@ task sumstat_to_vcf {
                 if chr[:3] != 'chr':
                     chr = 'chr' + chr
 
+                ref = s[h_idx[ref_col]]
+                alt = s[h_idx[alt_col]]
+                if ref == 'I' and alt == 'D' or ref == 'D' and alt == 'I':
+                    continue
+                if ref == '*' or ref == '!' or alt == '*' or alt == '!':
+                    continue
+                if ref == 'N' or alt == 'N':
+                    continue
                 pos = s[h_idx[pos_col]]
                 ref = s[h_idx[ref_col]]
                 alt = s[h_idx[alt_col]]
@@ -231,7 +240,7 @@ task sumstat_to_vcf {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk " + 3*ceil(size(sumstat_file, "G")) + " HDD"
-        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -277,7 +286,7 @@ task lift {
         cpu: "1"
         memory: "32 GB"
         disks: "local-disk " + 10*ceil(size(sumstat_vcf, "G")) + " HDD"
-        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -394,7 +403,7 @@ task lift_postprocess {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk " + 4*ceil(size(lifted_vcf, "G") + size(sumstat_file, "G")) + " HDD"
-        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -445,7 +454,7 @@ task harmonize {
         cpu: "1"
         memory: "2 GB"
         disks: "local-disk " + 5*ceil(size(sumstat_file, "G") + size(gnomad_ref, "G")) + " HDD"
-        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
@@ -493,10 +502,11 @@ task plot {
     runtime {
         docker: "~{docker}"
         cpu: "1"
-        memory: "20 GB"
-        disks: "local-disk " + 5*ceil(size(sumstat_file, "G")) + " HDD"
-        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        memory: "30 GB"
+        disks: "local-disk " + 10*ceil(size(sumstat_file, "G")) + " HDD"
+        zones: "us-central1-b"
         preemptible: 2
         noAddress: true
     }
 }
+

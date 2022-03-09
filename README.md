@@ -13,10 +13,6 @@ Mainly adopted from the [main HGI meta-analyses](https://github.com/covid19-hg/M
 
 ### 2.2. pull docker image from main covid-19-hg project
 
-pulled images
-`saige:0.36.3.2-2` `meta:1d50c` `plots:0.2` `meta:fe3de` `plots:0.5`
-
-
 example
 ```
 gcloud docker -- pull gcr.io/covid-19-hg/plots:0.2
@@ -24,37 +20,55 @@ docker tag gcr.io/covid-19-hg/plots:0.2 gcr.io/long-covid-hg/plots:0.2
 gcloud docker -- push gcr.io/long-covid-hg/plots:0.2
 ```
 
-### 2.3 format checking
+### 2.3 format checking format.wdl
 
-Need to make sure all sumstats are SAIGE format.  use `scripts/format/*.sh` if you need to modify.
-
-### 2.4. running munge_sumstats.wdl
+```{bash}
+lsof -ti:4999 | xargs kill -9
+covid19-hgi/CromwellInteract-master/cromwell_interact.py connect long-covid-hg-cromwell
+python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 connect long-covid-hg-cromwell
+python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/format.wdl --inputs wdl/format.json
 ```
-lsof -ti:5000 | xargs kill -9
+
+### 2.4. running munge.wdl
+```
+lsof -ti:4999 | xargs kill -9
 covid19-hgi/CromwellInteract-master/cromwell_interact.py connect long-covid-hg-cromwell 
 
 covid19-hgi/CromwellInteract-master/cromwell_interact.py \
-submit --wdl wdl/munge_sumstats.wdl \
---inputs wdl/munge_sumstats.json
+submit --wdl wdl/munge.wdl \
+--inputs wdl/munge.json
 
 covid19-hgi/CromwellInteract-master/cromwell_interact.py metadata \
 ${JOBID} --failed_jobs
 ```
 
-### 2.5 make {PHENO}.json files
-
-### 2.6 make `ALL.phenos.*.txt` and `ALL.files.*.txt` The order of the rows need to be concordant between two files.
+### 2.5 make configuration files for meta.wdl
 
 ```
-cat W2.3_ALL.json | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' > ALL.files.1.txt
-cat W1.3_ALL.json | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' >> ALL.files.1.txt
-cat N2.3_ALL.json  | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' >> ALL.files.1.txt
-cat N1.3_ALL.json  | grep "file" | cut -f4 -d '"' | tr '\n' '\t' | sed -e "s/\/cromwell_root/gs\:\//g" | sed 's/\t$/\n/' >> ALL.files.1.txt
+gsutil ls gs://long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-*/*.gz >> data/DF2/config_meta_F2.tsv
+
+vi data/DF2/config_meta_F2.tsv
+
+for pheno in NQ1.3 NQ2.3 WQ1.3 WQ2.3 N1.3 N2.3 W1.3 W2.3
+do
+python3 scripts/makejson.py --input data/DF2/config_meta_F2.tsv \
+--output data/DF2/$pheno.json --pheno $pheno
+done
+
+python3 scripts/makesumstats.py --input data/DF2/config_meta_F2.tsv \
+--output data/DF2/step3_sumstats_loc.txt
+
+for pheno in NQ1.3 NQ2.3 WQ1.3 WQ2.3 N1.3 N2.3 W1.3 W2.3
+do
+echo "gs://long-covid-hg-cromwell/20220301/conf/$pheno.json" >> data/DF2/step3_pheno_conf.txt
+done
+
+gsutil cp data/DF2/* gs://long-covid-hg-cromwell/20220301/conf/
 ```
 
-### 2.7 run meta analyses
+### 2.6 step3 run meta.wdl
 
 ```
-python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py submit --wdl wdl/meta.wdl --inputs wdl/meta.json  --deps wdl/meta.sub.zip
-```
+python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/meta.wdl --inputs wdl/meta.json
 
+```

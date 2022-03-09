@@ -1,0 +1,60 @@
+{
+    "meta": [
+        {
+            "name": "BQC19",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-0/cacheCopy/BQC19_Nakanishi_NQ1.3_F2_ALL_ALL_EUR_166_616_REGENIE_20220227.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "n_cases": "166",
+            "n_controls": "616",
+            "chr": "#CHR",
+            "pos": "POS",
+            "ref": "REF",
+            "alt": "ALT",
+            "effect": "beta",
+            "effect_type": "beta",
+            "pval": "pval",
+            "se": "sebeta"
+        },
+        {
+            "name": "Helix",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-18/cacheCopy/Helix_Cirulli_NQ1.3_F2_ALL_ALL_EUR_69_308_REGENIE_20211025.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "n_cases": "69",
+            "n_controls": "308",
+            "chr": "#CHR",
+            "pos": "POS",
+            "ref": "REF",
+            "alt": "ALT",
+            "effect": "beta",
+            "effect_type": "beta",
+            "pval": "pval",
+            "se": "sebeta"
+        },
+        {
+            "name": "INCMNSZ_AMR",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-31/cacheCopy/INCMNSZ_Huerta_NQ1.3_F2_ALL_ALL_AMR_180_165_REGENIE_20220225.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_amr.gz",
+            "n_cases": "180",
+            "n_controls": "165",
+            "chr": "#CHR",
+            "pos": "POS",
+            "ref": "REF",
+            "alt": "ALT",
+            "effect": "beta",
+            "effect_type": "beta",
+            "pval": "pval",
+            "se": "sebeta"
+        },
+        {
+            "name": "JapanTaskForce",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-2/cacheCopy/JapanTaskForce_Okada_NQ1.3_F1_ALL_ALL_EAS_85_134_SAIGE_20220222.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_eas.gz",
+            "n_cases": "85",
+            "n_controls": "134",
+            "chr": "#CHR",
+            "pos": "POS",
+            "ref": "REF",
+            "alt": "ALT",
+            "effect": "beta",
+            "effect_type": "beta",
+            "pval": "pval",
+            "se": "sebeta"
+        }
+    ]
+}

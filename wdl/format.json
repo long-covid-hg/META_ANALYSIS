@@ -1,0 +1,5 @@
+{
+    "format.sumstats_loc": "gs://long-covid-hg-cromwell/20220301/conf/step1_format.txt",
+    "format.formatting.docker": "gcr.io/long-covid-hg/bioinformatics:0.7"
+}
+  
