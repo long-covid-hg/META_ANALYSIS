@@ -2,7 +2,7 @@
     "meta": [
         {
             "name": "BQC19",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-1/cacheCopy/BQC19_Nakanishi_NQ2.3_F2_ALL_ALL_EUR_166_1092_REGENIE_20220227.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-1/cacheCopy/BQC19_Nakanishi_NQ2.3_F2_ALL_ALL_EUR_166_1092_REGENIE_20220227.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "166",
             "n_controls": "1092",
             "chr": "#CHR",
@@ -16,7 +16,7 @@
         },
         {
             "name": "Helix",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-19/Helix_Cirulli_NQ2.3_F2_ALL_ALL_EUR_69_2820_REGENIE_20211025.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-19/cacheCopy/Helix_Cirulli_NQ2.3_F2_ALL_ALL_EUR_69_2820_REGENIE_20211025.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "69",
             "n_controls": "2820",
             "chr": "#CHR",
@@ -30,7 +30,7 @@
         },
         {
             "name": "INCMNSZ_AMR",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-32/cacheCopy/INCMNSZ_Huerta_NQ2.3_F2_ALL_ALL_AMR_180_5545_REGENIE_20220225.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_amr.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-32/cacheCopy/INCMNSZ_Huerta_NQ2.3_F2_ALL_ALL_AMR_180_5545_REGENIE_20220225.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_amr.gz",
             "n_cases": "180",
             "n_controls": "5545",
             "chr": "#CHR",
@@ -44,7 +44,7 @@
         },
         {
             "name": "JapanTaskForce",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-3/cacheCopy/JapanTaskForce_Okada_NQ2.3_F1_ALL_ALL_EAS_85_3451_SAIGE_20220222.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_eas.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-3/cacheCopy/JapanTaskForce_Okada_NQ2.3_F1_ALL_ALL_EAS_85_3451_SAIGE_20220222.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_eas.gz",
             "n_cases": "85",
             "n_controls": "3451",
             "chr": "#CHR",
@@ -58,7 +58,7 @@
         },
         {
             "name": "MSCIC",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-6/cacheCopy/MSCIC_Jordan_NQ2.3_F1_ALL_ALL_AFR_54_125_REGENIE_20211129.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_afr.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-6/cacheCopy/MSCIC_Jordan_NQ2.3_F1_ALL_ALL_AFR_54_125_REGENIE_20211129.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_afr.gz",
             "n_cases": "54",
             "n_controls": "125",
             "chr": "#CHR",
@@ -72,7 +72,7 @@
         },
         {
             "name": "MSCIC",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-7/cacheCopy/MSCIC_Jordan_NQ2.3_F1_ALL_ALL_EUR_59_153_REGENIE_20211129.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-7/cacheCopy/MSCIC_Jordan_NQ2.3_F1_ALL_ALL_EUR_59_153_REGENIE_20211129.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "59",
             "n_controls": "153",
             "chr": "#CHR",

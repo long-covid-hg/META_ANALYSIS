@@ -2,7 +2,7 @@
     "meta": [
         {
             "name": "BQC19",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-12/cacheCopy/BQC19_Nakanishi_WQ1.3_F2_ALL_ALL_EUR_173_656_REGENIE_20220227.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-12/cacheCopy/BQC19_Nakanishi_WQ1.3_F2_ALL_ALL_EUR_173_656_REGENIE_20220227.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "173",
             "n_controls": "656",
             "chr": "#CHR",
@@ -16,7 +16,7 @@
         },
         {
             "name": "DBDS",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-27/cacheCopy/DBDS_Banasik_WQ1.3_F1_ALL_ALL_EUR_209_938_REGENIE_20211104.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-27/cacheCopy/DBDS_Banasik_WQ1.3_F1_ALL_ALL_EUR_209_938_REGENIE_20211104.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "209",
             "n_controls": "938",
             "chr": "#CHR",
@@ -30,7 +30,7 @@
         },
         {
             "name": "EXCEED",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-29/cacheCopy/EXCEED_Batini_WQ1.3_F1_ALL_ALL_EUR_50_114_SAIGE_20211112.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-29/cacheCopy/EXCEED_Batini_WQ1.3_F1_ALL_ALL_EUR_50_114_SAIGE_20211112.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "50",
             "n_controls": "114",
             "chr": "#CHR",
@@ -44,7 +44,7 @@
         },
         {
             "name": "GCAT",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-25/cacheCopy/GCAT_Cortes_WQ1_3_F1_ALL_ALL_EUR_66_147_REGENIE_20211110.txt.rev.gz.formatted.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-25/cacheCopy/GCAT_Cortes_WQ1_3_F1_ALL_ALL_EUR_66_147_REGENIE_20211110.txt.rev.gz.formatted.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "66",
             "n_controls": "147",
             "chr": "#CHR",
@@ -58,7 +58,7 @@
         },
         {
             "name": "Genotek",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-17/cacheCopy/Genotek_Rakitko_WQ1.3_F1_ALL_ALL_EUR_1219_1862_PLINK2_20220303_txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-17/cacheCopy/Genotek_Rakitko_WQ1.3_F1_ALL_ALL_EUR_1219_1862_PLINK2_20220303_txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "1219",
             "n_controls": "1862",
             "chr": "#CHR",
@@ -72,7 +72,7 @@
         },
         {
             "name": "Helix",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-20/cacheCopy/Helix_Cirulli_WQ1.3_F2_ALL_ALL_EUR_96_410_REGENIE_20211025.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-20/cacheCopy/Helix_Cirulli_WQ1.3_F2_ALL_ALL_EUR_96_410_REGENIE_20211025.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "96",
             "n_controls": "410",
             "chr": "#CHR",
@@ -86,7 +86,7 @@
         },
         {
             "name": "PMBB",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-8/cacheCopy/PMBB_Verma_WQ1.3_F2_Adults_ALL_EUR_43_112_REGENIE_20220223.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-8/cacheCopy/PMBB_Verma_WQ1.3_F2_Adults_ALL_EUR_43_112_REGENIE_20220223.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "43",
             "n_controls": "112",
             "chr": "#CHR",
@@ -100,7 +100,7 @@
         },
         {
             "name": "TwinsUK",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-10/cacheCopy/TwinsUK_Mangino_WQ1.3_F1_ALL_FEMALE_EUR_69_318_REGENIE_20211015.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-10/cacheCopy/TwinsUK_Mangino_WQ1.3_F1_ALL_FEMALE_EUR_69_318_REGENIE_20211015.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "69",
             "n_controls": "318",
             "chr": "#CHR",
@@ -114,7 +114,7 @@
         },
         {
             "name": "UnderstandingSociety",
-            "file": "/cromwell_root/long-covid-hg-cromwell/munge/757864ee-79dc-4be8-9f1c-84a280f19d44/call-harmonize/shard-15/cacheCopy/UnderstandingSociety_Kumari_WQ1.3_F2_ALL_ALL_EUR_54_785_SAIGE_20220107.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
+            "file": "/cromwell_root/long-covid-hg-cromwell/munge/bef80eda-dea4-4371-9320-bbce0333b9b0/call-harmonize/shard-15/cacheCopy/UnderstandingSociety_Kumari_WQ1.3_F2_ALL_ALL_EUR_54_785_SAIGE_20220107.txt.formatted.munged.tsv.GRCh38.gnomad_v3_b38_ref_nfe.gz",
             "n_cases": "54",
             "n_controls": "785",
             "chr": "#CHR",

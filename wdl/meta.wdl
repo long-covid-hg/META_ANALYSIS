@@ -92,8 +92,8 @@ task run_range {
     runtime {
         docker: "~{docker}"
         cpu: 1
-        memory: "2 GB"
-        disks: "local-disk " + 3 * ceil(size(sumstat_files, "GB") + 1) + " HDD"
+        memory: "10 GB"
+        disks: "local-disk " + 4 * ceil(size(sumstat_files, "GB") + 1) + " HDD"
         zones: "us-central1-b"
         preemptible: 2
         noAddress: true
@@ -135,8 +135,8 @@ task combine_chrom_metas {
     runtime {
         docker: "~{docker}"
         cpu: 1
-        memory: "2 GB"
-        disks: "local-disk " + 3 * ceil(size(meta_outs, "GB") + 1) + " HDD"
+        memory: "10 GB"
+        disks: "local-disk " + 4 * ceil(size(meta_outs, "GB") + 1) + " HDD"
         zones: "us-central1-b"
         preemptible: 2
         noAddress: true
@@ -228,8 +228,8 @@ task add_rsids {
     runtime {
         docker: "~{docker}"
         cpu: "1"
-        memory: "2 GB"
-        disks: "local-disk " + 2*ceil(size(meta_file, "G") + size(ref_file, "G")) + " SSD"
+        memory: "10 GB"
+        disks: "local-disk " + 4*ceil(size(meta_file, "G") + size(ref_file, "G")) + " SSD"
         zones: "us-central1-b"
         preemptible: 2
         noAddress: true
@@ -268,8 +268,8 @@ task meta_qq {
     runtime {
         docker: "~{docker}"
         cpu: "1"
-        memory: "20 GB"
-        disks: "local-disk " + 10*ceil(size(meta_file, "G")) + " HDD"
+        memory: "30 GB"
+        disks: "local-disk " + 20*ceil(size(meta_file, "G")) + " HDD"
         zones: "us-central1-b"
         preemptible: 2
         noAddress: true
