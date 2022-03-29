@@ -1,4 +1,4 @@
-# COVID-19 HGI META ANALYSIS workflow for long COVID freeze 1
+# COVID-19 HGI META ANALYSIS workflow for long COVID
 
 [google cloud platform for long-covid](https://console.cloud.google.com/home/dashboard?project=long-covid-hg)
 
