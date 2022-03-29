@@ -9,7 +9,7 @@
 ## 2. META-ANALYSIS
 Mainly adopted from the [main HGI meta-analyses](https://github.com/covid19-hg/META_ANALYSIS)
 
-### 2.1. set up google VM cromwell (see cromwell_google_setup repository)
+### 2.1. set up google VM cromwell (see [cromwell_google_setup](https://github.com/long-covid-hg/cromwell_google_setup) repository)
 
 ### 2.2. pull docker image from main covid-19-hg project
 
