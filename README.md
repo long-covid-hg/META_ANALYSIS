@@ -2,7 +2,7 @@
 
 [google cloud platform for long-covid](https://console.cloud.google.com/home/dashboard?project=long-covid-hg)
 
-For a new meta-analysis run on long-covid-hg-cromwell virtual machine (VM), go to step 1. Meta-analysis
+For a new meta-analysis run on long-covid-hg-cromwell virtual machine, go to step 1. Meta-analysis
 
 ## 0. Connect to Google Virtual Machine (VM) and set up Cromwell
 
