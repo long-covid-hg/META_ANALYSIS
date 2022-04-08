@@ -1,6 +1,6 @@
 {
-    "meta_analysis.sumstats_loc": "gs://long-covid-hg-cromwell/20220301/conf/step3_sumstats_loc.txt",
-    "meta_analysis.pheno_confs": "gs://long-covid-hg-cromwell/20220301/conf/step3_pheno_conf.txt",
+    "meta_analysis.sumstats_loc": "gs://long-covid-hg-cromwell/20220331/conf/step3_sumstats_loc.txt",
+    "meta_analysis.pheno_confs": "gs://long-covid-hg-cromwell/20220331/conf/step3_pheno_conf.txt",
     "meta_analysis.run_range.docker": "gcr.io/long-covid-hg/meta:7.42",
     "meta_analysis.run_range.method": "inv_var",
     "meta_analysis.run_range.opts": "--is_het_test --dont_allow_space --leave_one_out",

@@ -1,5 +1,5 @@
 {
-    "munge.sumstats_loc": "gs://long-covid-hg-cromwell/20220301/conf/step2_munge.txt",
+    "munge.sumstats_loc": "gs://long-covid-hg-cromwell/20220331/conf/step2_munge.txt",
     "munge.clean_filter.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
     "munge.clean_filter.chr_col": "CHR",
     "munge.clean_filter.pos_col": "POS",

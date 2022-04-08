@@ -5,7 +5,7 @@ import re
 import argparse
 
 def makesumstats(input_file,output_file):
-    for pheno in ['NQ1.3', 'NQ2.3', 'WQ1.3', 'WQ2.3', 'N1.3', 'N2.3', 'W1.3', 'W2.3']:
+    for pheno in ['W1.3', 'W2.3', 'WQ1.3', 'WQ2.3', 'N1.3', 'N2.3', 'NE1.3', 'NE2.3', 'NQ1.3', 'NQ2.3']:
         arr = []
         file = open(input_file, 'r')
         for line in file:
