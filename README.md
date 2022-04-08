@@ -46,7 +46,9 @@ cd /home/Analysis/
 ```
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (META_ANALYSIS/data/DF2/step1_format.txt)
+
 #...
+
 Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded for now, but could be automated]
 gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/20220331/conf/
 
@@ -63,7 +65,9 @@ python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 con
 ```
 
 Change the date in the format.json (line 2)
+```
 vi wdl/format.json
+```
 
 Run the format step
 ```
@@ -75,7 +79,7 @@ Save the HEX job id you got after submitting format.wdl (e.g. jobid=02390119-ac7
 jobid=
 ```
 
-For checking the status of the jobs, you can give jobid=[the hex ID you got when submitting] and use e.g.
+For checking the status of the jobs, you can use e.g.
 ```
 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary | tail -n 3
 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary 
@@ -99,12 +103,17 @@ covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 connect lon
 ```
 
 Change the date in the munge.json (line 2)
+```
 vi wdl/munge.json
+```
 
 #Run the munging step
+```
 covid19-hgi/CromwellInteract-master/cromwell_interact.py submit --wdl wdl/munge.wdl --inputs wdl/munge.json
+```
 
 #Save the HEX job id you got after submitting munge.wdl 
+```
 jobid=
 ```
 
@@ -170,7 +179,6 @@ vi wdl/meta.json
 ```
 
 Run the meta-analysis step
-
 ```
 python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/meta.wdl --inputs wdl/meta.json
 ```
