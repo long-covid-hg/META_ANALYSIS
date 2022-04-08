@@ -27,7 +27,7 @@ Start a new meta-analysis run from this step (if the Cromwell has already been s
 
 ### 1.0 X11 forwarding setup
 
-Run as superuser (root)
+Run the whole pipeline as superuser (root)
 ```
 sudo su
 ```
