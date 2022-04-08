@@ -76,7 +76,7 @@ python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 sub
 
 Save the HEX job id you got after submitting format.wdl (e.g. jobid=02390119-ac77-467e-8bc6-824cb70666b0; save these also to yourself in case the connection is lost)
 ```
-jobid=
+jobid={jobid}
 ```
 
 For checking the status of the jobs, you can use e.g.
@@ -114,7 +114,7 @@ covid19-hgi/CromwellInteract-master/cromwell_interact.py submit --wdl wdl/munge.
 
 #Save the HEX job id you got after submitting munge.wdl 
 ```
-jobid=
+jobid={jobid}
 ```
 
 ### 1.3 Meta-analysis (meta.wdl)
@@ -130,7 +130,7 @@ gsutil ls gs://long-covid-hg-cromwell/munge/$jobid/call-harmonize/shard-*/**/*.g
 Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces]
 
 ```
-d /home/Analysis/
+cd /home/Analysis/
 /generate_makejson_input.sh {$jobid}
 
 mv config_meta_F2.tsv META_ANALYSIS/data/DF2/
@@ -185,7 +185,7 @@ python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 sub
 
 Save the HEX job id you got after submitting meta.wdl 
 ```
-jobid=
+jobid={jobid}
 ```
 
 #Check status
