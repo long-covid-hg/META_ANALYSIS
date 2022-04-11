@@ -139,7 +139,7 @@ cd /home/Analysis/META_ANALYSIS/
 ```
 
 Create a .json file for each meta-analysis phenotype
-(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py the for-loop generating step3_pheno_conf.txt)
+(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt)
 ```
 for pheno in W1.3 W2.3 WQ1.3 WQ2.3 N1.3 N2.3 NE1.3 NE2.3 NQ1.3 NQ2.3
 do
