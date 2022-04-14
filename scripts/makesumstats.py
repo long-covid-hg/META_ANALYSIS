@@ -3,9 +3,23 @@
 import json
 import re
 import argparse
+import os
 
-def makesumstats(input_file,output_file):
-    for pheno in ['W1.3', 'W2.3', 'WQ1.3', 'WQ2.3', 'N1.3', 'N2.3', 'NE1.3', 'NE2.3', 'NQ1.3', 'NQ2.3']:
+def getphenolist(input_file):
+    file = open(input_file, 'r')
+    phenolist = []
+    next(file)
+    for line in file:
+        pheno=line.split('\t')[0]
+        if pheno not in phenolist:
+            phenolist.append(pheno)
+    return phenolist
+
+
+def makesumstats(input_file,phenolist,output_file):
+    if os.path.exists(output_file):
+        os.remove(output_file)
+    for pheno in phenolist:
         arr = []
         file = open(input_file, 'r')
         for line in file:
@@ -16,7 +30,7 @@ def makesumstats(input_file,output_file):
             output.write('\t'.join(arr) + '\n')
 
 def main(args):
-    makesumstats(args.input,args.output)
+    makesumstats(args.input,getphenolist(args.input),args.output)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

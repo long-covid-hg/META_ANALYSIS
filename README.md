@@ -131,7 +131,7 @@ Run a script generating a list of the munged summary stat files to meta-analyse 
 
 ```
 cd /home/Analysis/
-/generate_makejson_input.sh {$jobid}
+META_ANALYSIS/scripts/generate_makejson_input.sh {$jobid}
 
 mv config_meta_F2.tsv META_ANALYSIS/data/DF2/
 
