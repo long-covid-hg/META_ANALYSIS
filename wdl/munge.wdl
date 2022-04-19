@@ -52,9 +52,13 @@ task clean_filter {
         String ref_col
         String alt_col
         String af_col
+        String info_col
         String beta_col
         String se_col
         String pval_col
+
+        Float min_af
+        Float min_info
 
         String outfile = sub(basename(sumstat_file, ".gz"), "\\.bgz$", "") + ".munged.tsv.gz"
     }
@@ -98,7 +102,7 @@ task clean_filter {
                 print $0
             } NR>1 {
                 sub("^0", "", $a["#CHR"]); sub("^chr", "", $a["#CHR"]); sub("^X", "23", $a["#CHR"]); sub("^Y", "24", $a["#CHR"]);
-                if ($a["#CHR"] ~ /^[0-9]+$/ && $a["pval"] > 0 && $a["beta"] < 1e6 && $a["beta"] > -1e6 && $a["af_alt"]>0 && (1-$a["af_alt"])>0) {
+                if ($a["#CHR"] ~ /^[0-9]+$/ && $a["pval"] > 0 && $a["beta"] < 1e6 && $a["beta"] > -1e6 && $a["af_alt"]>=~{min_af} && (1-$a["af_alt"])>=~{min_af} && a["~{info_col}"]>=~{min_info} ) {
                     printf $1
                     for (i=2; i<=NF; i++) {
                         if (i==pos) {
