@@ -10,7 +10,7 @@
 {
    for taskid in "$@"
    do
-      gsutil ls gs://long-covid-hg-cromwell/munge/$taskid/call-harmonize/shard-*/** | grep ".\.gz$"
+      gsutil ls gs://long-covid-hg-cromwell/munge/$taskid/call-lift_postprocess/shard-*/** | grep ".\.gz$"
    done
 } | awk '{split($1,a,"/");c[a[length(a)]]=$1}END{for(filen in c){print c[filen]}}' > munged_sumstats.txt
 
