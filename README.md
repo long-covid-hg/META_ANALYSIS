@@ -47,10 +47,10 @@ cd /home/Analysis/
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (META_ANALYSIS/data/DF2/step1_format.txt)
 
-#...
-
 Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded for now, but could be automated]
+```
 gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/20220331/conf/
+```
 
 Run this pipeline from META_ANALYSIS directory
 ```
@@ -89,7 +89,9 @@ watch --interval=10 'covid19-hgi/CromwellInteract-master/cromwell_interact.py --
 
 ### 1.2 Munging (munge.wdl)
 
-Create a list of formatted files and ancestries (step2_munge.txt) [change date] [This step will be further automated]
+Create a list of formatted files and ancestries (step2_munge.txt) 
+[change date] 
+[This step will be further automated]
 ```
 gsutil ls gs://long-covid-hg-cromwell/format/$jobid/call-formatting/**/*.gz
 vi data/DF2/step2_munge.txt
@@ -109,7 +111,7 @@ vi wdl/munge.json
 
 #Run the munging step
 ```
-covid19-hgi/CromwellInteract-master/cromwell_interact.py submit --wdl wdl/munge.wdl --inputs wdl/munge.json
+covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/munge.wdl --inputs wdl/munge.json
 ```
 
 #Save the HEX job id you got after submitting munge.wdl 
@@ -120,12 +122,6 @@ jobid={jobid}
 ### 1.3 Meta-analysis (meta.wdl)
 
 Make configuration files for meta.wdl
-This manual step has been replaced by the script generating this list, see the next step
-(Manually make a list of the summary stat files to meta-analyse) 
-```
-gsutil ls gs://long-covid-hg-cromwell/munge/$jobid/call-harmonize/shard-*/**/*.gz >> data/DF2/config_meta_F2.tsv
-#vi data/DF2/config_meta_F2.tsv
-```
 
 Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces]
 
@@ -157,7 +153,9 @@ python3 scripts/makesumstats.py --input data/DF2/config_meta_F2.tsv --output dat
 ```
 
 Create a list of meta-analysis phenotypes to analyse ($pheno.json) [change date]
+
 (Note that this list should be the same (and in same order) as in the first for-loop creating the pheno.jsons and in the scripts/makesumstats.py)
+
 (First remove a possible old version of step3_pheno_conf.txt so that the new does not get appended to it)
 ```
 mv data/DF2/step3_pheno_conf.txt data/DF2/step3_pheno_conf.txt.bkp
