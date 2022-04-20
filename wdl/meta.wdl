@@ -293,8 +293,8 @@ task post_filter {
 
         # Use the first '_beta' suffix column as the beta of the left-most variant. If NA --> remove variant
         zcat ~{meta_file} | awk -v OFS='\t' '
-        NR==1 {for(i=1;i<=NF;i++) if($i~"_beta$") {beta_col=i; break} print $0}
-        (NR>1 && $beta_col != "NA") {print}
+        NR==1 {str="#CHR\tPOS\tREF\tALT\tSNP\tRSID";for(i=1;i<=NF;i++){col[$i]=i;if($i~/^(all_|lmso_)/&&$i~/(_meta_|_het_)/){c[i]++;str=str"\t"$i}};print str}
+        (NR>1 && $col["all_meta_Nstudies"] != 1) {str=$col["#CHR"]"\t"$col["POS"]"\t"$col["REF"]"\t"$col["ALT"]"\t"$col["SNP"]"\t"$col["rsid"];for(i=1;i<=NF;i++){if(i in c){str=str"\t"$i}};print str}
         ' | bgzip > ~{base}_filtered.tsv.gz
         tabix -s 1 -b 2 -e 2 ~{base}_filtered.tsv.gz
 
