@@ -940,7 +940,7 @@ def run():
                     matching_studies_lmso = [(studs[i], var) for i,var in enumerate(next_var) if studs[i].name != matching_studies[mspsi][0].name and var is not None]
                     # add removed study name and sample size for lmso meta column
                     outdat.append( matching_studies[mspsi][0].name )
-                    outdat.append( sum([matching_studies_lmso[j][1].Nsamples for j in range(len(matching_studies))]) )
+                    outdat.append( sum([matching_studies_lmso[j][1].Nsamples for j in range(len(matching_studies_lmso))]) )
 
                     # run lmso meta-analysis if 3 or more studies have data for this variant
                     if len( matching_studies )>2:
