@@ -48,10 +48,10 @@ cd /home/Analysis/
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (META_ANALYSIS/data/DF2/step1_format.txt)
 
-#...
-
 Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded for now, but could be automated]
+```
 gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/20220331/conf/
+```
 
 Run this pipeline from META_ANALYSIS directory
 ```
