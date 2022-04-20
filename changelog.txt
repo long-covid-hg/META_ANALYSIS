@@ -1,0 +1,53 @@
+# 2022/04/20
+
+Fix 1 (not in DF2_fix currently):
+- "format.wdl" -> if the file format was SAIGE, the whole file was re-bgzipped, but now only the required columns are extracted (in a similar fashion to the other formats)
+
+Fix 2:
+- "munge.json" 
+ -> added "info_col", "min_maf" and "min_info" inputs for the "clean_filter" task
+- "munge.wdl": "clean_filter" task
+ -> added variable definitions for "info_col", "min_maf" and "min_info"
+ -> changed AF filter from >0 to >=min_maf and added INFO>=min_info filter
+
+Fix 3:
+- "generate_makejson_input.sh"
+ -> script edited to add two extra fields to the .json files: "af_alt" and "info", so that these can be incorporated into the meta_analysis.py script
+ -> summary stats are used from "lift_postprocess" task instead of "harmonize", as "N" column is duplicated in "harmonize" task
+ -> script moved to "scripts" subfolder and README.md updated to account for this move
+- "meta_analysis.py"
+ -> "Study" class updated to make "af_alt" and "info" required data fields and conf variables (i.e. the .json files containing study info) and "Nsamples" as an optional field
+ -> "af_alt", "info" and "Nsamples" now pulled out for each study, alongside "pos", "eff" (beta) and "pval".
+ -> "af_alt" and "info" now reported for each study, with "Nsamples" reported if included in the input
+ -> averages of "af_alt" and "info", weighted by number of samples in study, are reported for full, leave-one-out and pairwise meta-analyses, in both "inv_var" and "n" methods
+
+Fix 4:
+- "meta_analysis.py"
+ -> Added option to parser for "leave most significant study out" - can be used by including the option "--leave_most_sig_out" to the script "scripts/meta_analysis.py" or added to the option "meta_analysis.run_range.opts" in the "wdl/meta.json" file.
+ -> If >1 study, most significant study is removed for each variant and (if >1 remaining) meta-analysis result reported excluding this study or (if 1 remaining) results for only study.
+ -> "af_alt", "info" and "Nsamples" reported for leave most significant study out analysis
+
+Fix 5:
+- "meta.json"
+ -> added "--leave_most_sig_out" flag to the meta-analysis options ("meta_analysis.run_range.opts") so that lmso is run by default. Remove if you want to disable this option
+ -> added "lmso_inv_var_meta_p" (leave-most-significant-out) to the list of manhattan's to plot. Remove this to stop it plotting the lmso p-values.
+
+Fix 6:
+- "generate_makejson_input.sh"
+ -> [study name] has been replaced with [study name]_[ethnicity], as previous script was only including one ethnicity's results if a study provided results from >1
+ -> only one set of results per study-ethnicity pair is included for each phenotype now
+ -> this script's output file is now written to "data/DF2/" within the "META_ANALYSIS" folder, so the user needs to run it from within the "META_ANALYSIS" folder.
+
+TO DO:
+- add in columns to the meta-analysis results for:
+ -> each study's MAF [X]
+ -> each study's INFO [X]
+ -> overall case count [-]
+ -> overall control count [-]
+ -> overall sample size [X]
+ -> overall (weighted) MAF [X]
+ -> overall (weighted) INFO [X]
+- correct the final filtering step to remove variants found in just a single GWAS, rather than removing those with a beta of NA for the first study
+- use n_cases and n_controls in Nsamples not available in study files
+- allow analysis of variants not in first GWAS summstats file
+- fix harmonize.py so that "N" column is not added if already exists
