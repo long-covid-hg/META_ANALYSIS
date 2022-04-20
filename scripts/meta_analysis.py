@@ -935,19 +935,18 @@ def run():
                 # only run if at least two studies left after removing most-sig
                 if len( matching_studies )>1:
                     # get number of study for most significant p-value
-                    #mspsi = min(range(len(matching_studies)), key = lambda j: matching_studies[j][1].pval)
                     mspsi = numpy.argmin( [matching_studies[j][1].pval for j in range(len(matching_studies))] )
                     # extract matching study results without most-significant study
                     matching_studies_lmso = [(studs[i], var) for i,var in enumerate(next_var) if studs[i].name != matching_studies[mspsi][0].name and var is not None]
                     # add removed study name and sample size for lmso meta column
                     outdat.append( matching_studies[mspsi][0].name )
-                    outdat.append( matching_studies_lmso[0][1].Nsamples )
+                    outdat.append( sum([matching_studies_lmso[j][1].Nsamples for j in range(len(matching_studies))]) )
 
-                    # run meta-analysis if 3 or more studies have data for this variant
+                    # run lmso meta-analysis if 3 or more studies have data for this variant
                     if len( matching_studies )>2:
 
                         # run meta-analysis with these results
-                        met = do_meta( matching_studies_loo, methods=methods, is_het_test=args.is_het_test )
+                        met = do_meta( matching_studies_lmso, methods=methods, is_het_test=args.is_het_test )
                         # print meta-analysis results for each method
                         for m in met:
                             if m is not None:
