@@ -1,0 +1,2 @@
+gs://long-covid-hg-cromwell/format/fdbc50cf-3d73-41f8-aa78-b4301cc348a9/call-formatting/shard-0/DBDS_Banasik_WQ1.3_F1_ALL_ALL_EUR_209_938_REGENIE_20211104.txt.formatted.gz	nfe
+gs://long-covid-hg-cromwell/format/fdbc50cf-3d73-41f8-aa78-b4301cc348a9/call-formatting/shard-1/DBDS_Banasik_WQ2.3_F1_ALL_ALL_EUR_209_5345_REGENIE_20211104.txt.formatted.gz	nfe

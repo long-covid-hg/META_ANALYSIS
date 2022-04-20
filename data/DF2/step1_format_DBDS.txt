@@ -1,0 +1,2 @@
+gs://long-covid-hg-dbs/DBDS_Banasik_WQ1.3_F1_ALL_ALL_EUR_209_938_REGENIE_20211104.txt.gz	SAIGE
+gs://long-covid-hg-dbs/DBDS_Banasik_WQ2.3_F1_ALL_ALL_EUR_209_5345_REGENIE_20211104.txt.gz	SAIGE
