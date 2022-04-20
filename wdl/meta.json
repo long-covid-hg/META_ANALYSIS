@@ -8,7 +8,7 @@
     "meta_analysis.add_rsids.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
     "meta_analysis.add_rsids.ref_file": "gs://long-covid-hg-cromwell/dbsnp/dbsnp_hg38p13_b153_numerical.vcf.gz",
     "meta_analysis.meta_qq.docker": "gcr.io/long-covid-hg/meta:7.42",
-    "meta_analysis.meta_qq.pvals_to_plot": "all_inv_var_meta_p,all_inv_var_het_p",
+    "meta_analysis.meta_qq.pvals_to_plot": "all_inv_var_meta_p,all_inv_var_het_p,lmso_inv_var_meta_p",
     "meta_analysis.meta_qq.loglog_ylim": 20,
     "meta_analysis.post_filter.docker": "gcr.io/long-covid-hg/bioinformatics:0.7"
 }
