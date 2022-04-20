@@ -200,7 +200,7 @@ def is_symmetric(a1, a2):
 
 class VariantData:
 
-    def __init__(self, chr, pos, ref, alt, af_alt, info, beta, pval, se=None, Nsamples=None, z_scr=None, extra_cols=[]):
+    def __init__(self, chr, pos, ref, alt, af_alt, info, beta, pval, se=None, Nsamples=None, extra_cols=[]):
         self.chr = chr
         self.pos = int(float(pos))
         self.ref = ref.strip().upper()
@@ -212,11 +212,9 @@ class VariantData:
         try:
             self.se = float(se) if se is not None else None
             self.Nsamples = int(float(Nsamples)) if Nsamples is not None else None
-            self.z_scr = float(z_scr) if z_scr is not None else None
         except ValueError:
             self.se = None
             self.Nsamples = None
-            self.z_scr = None
 
         self.extra_cols = extra_cols
 
@@ -326,7 +324,7 @@ class Study:
     "effect_type":check_eff_field,
     "pval":str}
 
-    OPTIONAL_FIELDS = {"se":str,"Nsamples":str,"z_scr":str}
+    OPTIONAL_FIELDS = {"se":str,"Nsamples":str}
 
     def __init__(self, conf, chrom=None, dont_allow_space=False):
         '''
@@ -774,7 +772,7 @@ def run():
 
 
         if args.leave_most_sig_out:
-            out.write("\tlmso_meta_Nsamples")
+            out.write("\tlmso_meta_removed_study_name\tlmso_meta_Nsamples")
             for m in methods:
                 if args.is_het_test:
                     out.write("\tlmso_"+m+"_meta_beta\t" +
@@ -902,13 +900,6 @@ def run():
                             meta_res.extend(['NA'] * 8)
 
 
-                if args.leave_most_sig_out:
-                    if len( matching_studies )>2:
-
-                    else:
-
-
-
             else:
                 if args.is_het_test:
                     # only one study has results - per method: 8 columns (var sumstats) for left-most study and NA column if het test
@@ -942,12 +933,78 @@ def run():
             # leave most-significant result out
             if args.leave_most_sig_out:
                 # only run if at least two studies left after removing most-sig
-                if len( matching_studies )>2:
+                if len( matching_studies )>1:
                     # get number of study for most significant p-value
-                    mspsi = min(range(len(matching_studies)), key = lambda j: matching_studies[j][1].pval)
+                    #mspsi = min(range(len(matching_studies)), key = lambda j: matching_studies[j][1].pval)
+                    mspsi = numpy.argmin( [matching_studies[j][1].pval for j in range(len(matching_studies))] )
                     # extract matching study results without most-significant study
-                    matching_studies_lmso = [(studs[i], var) for i,var in enumerate(next_var) if i != mspsi and var is not None]
-                    # 
+                    matching_studies_lmso = [(studs[i], var) for i,var in enumerate(next_var) if studs[i].name != matching_studies[mspsi][0].name and var is not None]
+                    # add removed study name and sample size for lmso meta column
+                    outdat.append( matching_studies[mspsi][0].name )
+                    outdat.append( matching_studies_lmso[0][1].Nsamples )
+
+                    # run meta-analysis if 3 or more studies have data for this variant
+                    if len( matching_studies )>2:
+
+                        # run meta-analysis with these results
+                        met = do_meta( matching_studies_loo, methods=methods, is_het_test=args.is_het_test )
+                        # print meta-analysis results for each method
+                        for m in met:
+                            if m is not None:
+                                # if het test flag is set, 9 values outputted from meta
+                                if args.is_het_test:
+                                    outdat.extend([format_num(num) for num in m[0:3]])
+                                    outdat.extend([int(num) for num in m[3:6]])
+                                    outdat.extend([format_num(num) for num in m[6:9]])
+                                # otherwise, 8 values outputted
+                                else:
+                                    outdat.extend([format_num(num) for num in m[0:3]])
+                                    outdat.extend([int(num) for num in m[3:6]])
+                                    outdat.extend([format_num(num) for num in m[6:8]])
+                            else:
+                                # m returned as None (meta not performed for this method for this var)
+                                # add NA*9 if het test flag set, 8*NA otherwise
+                                if args.is_het_test:
+                                    outdat.extend(['NA'] * 9)
+                                else:
+                                    outdat.extend(['NA'] * 8)
+
+                    # if only two matching studies, then just print stats of least significant study
+                    elif len( matching_studies )==2:
+
+                        # use stats from only study remaining - 9 columns per method if het test flag set
+                        if args.is_het_test:
+                            outdat.extend( [format_num(matching_studies_lmso[0][1].beta),
+                                            format_num(matching_studies_lmso[0][1].se),
+                                            format_num(matching_studies_lmso[0][1].pval),
+                                            int(matching_studies_lmso[0][0].n_cases),
+                                            int(matching_studies_lmso[0][0].n_controls),
+                                            int(matching_studies_lmso[0][0].effective_size_logistic) ,
+                                            format_num(matching_studies_lmso[0][1].af_alt),
+                                            format_num(matching_studies_lmso[0][1].info),
+                                            'NA']  * len(methods) )
+
+                        # use stats from only study remaining - 8 columns per method if het test flag not set
+                        else:
+                            outdat.extend( [format_num(matching_studies_lmso[0][1].beta),
+                                            format_num(matching_studies_lmso[0][1].se),
+                                            format_num(matching_studies_lmso[0][1].pval),
+                                            int(matching_studies_lmso[0][0].n_cases),
+                                            int(matching_studies_lmso[0][0].n_controls),
+                                            int(matching_studies_lmso[0][0].effective_size_logistic) ,
+                                            format_num(matching_studies_lmso[0][1].af_alt),
+                                            format_num(matching_studies_lmso[0][1].info)]  * len(methods) )
+
+                # else, only one study so not possible to remove - set lmso columns to NA
+                else:
+                    # add NA for each removed study name column and lmso Nsamples column
+                    outdat.extend(['NA'] * 2)
+                    if args.is_het_test:
+                        # 9 columns if het test flag set
+                        outdat.extend(['NA'] * 9 * len(methods))
+                    else:
+                        # 8 columns if het test flag not set
+                        outdat.extend(['NA'] * 8 * len(methods))
 
 
             # leave one out results
@@ -955,7 +1012,7 @@ def run():
                 for s,_ in enumerate(studs):
                     matching_studies_loo = [(studs[i], var) for i,var in enumerate(next_var) if s != i and var is not None]
                     #outdat.append( str(len(matching_studies_loo)) )
-                    outdat.append( sum([matching_studies[j][1].Nsamples for j in range(len(matching_studies_loo))]) )
+                    outdat.append( sum([matching_studies_loo[j][1].Nsamples for j in range(len(matching_studies_loo))]) )
                     if len(matching_studies_loo) > 1:
                         met = do_meta( matching_studies_loo, methods=methods, is_het_test=args.is_het_test )
                         for m in met:
