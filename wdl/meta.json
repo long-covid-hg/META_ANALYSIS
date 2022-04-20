@@ -3,7 +3,7 @@
     "meta_analysis.pheno_confs": "gs://long-covid-hg-cromwell/20220331/conf/step3_pheno_conf.txt",
     "meta_analysis.run_range.docker": "gcr.io/long-covid-hg/meta:7.42",
     "meta_analysis.run_range.method": "inv_var",
-    "meta_analysis.run_range.opts": "--is_het_test --dont_allow_space --leave_one_out",
+    "meta_analysis.run_range.opts": "--is_het_test --dont_allow_space --leave_one_out --leave_most_sig_out",
     "meta_analysis.combine_chrom_metas.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
     "meta_analysis.add_rsids.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
     "meta_analysis.add_rsids.ref_file": "gs://long-covid-hg-cromwell/dbsnp/dbsnp_hg38p13_b153_numerical.vcf.gz",
