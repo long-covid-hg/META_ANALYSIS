@@ -126,12 +126,7 @@ Make configuration files for meta.wdl
 Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces]
 
 ```
-cd /home/Analysis/
-META_ANALYSIS/scripts/generate_makejson_input.sh {$jobid}
-
-mv config_meta_F2.tsv META_ANALYSIS/data/DF2/
-
-cd /home/Analysis/META_ANALYSIS/
+scripts/generate_makejson_input.sh {$jobid}
 ```
 
 Create a .json file for each meta-analysis phenotype
@@ -139,8 +134,7 @@ Create a .json file for each meta-analysis phenotype
 ```
 for pheno in W1.3 W2.3 WQ1.3 WQ2.3 N1.3 N2.3 NE1.3 NE2.3 NQ1.3 NQ2.3
 do
-python3 scripts/makejson.py --input data/DF2/config_meta_F2.tsv \
---output data/DF2/$pheno.json --pheno $pheno
+python3 scripts/makejson.py --input data/DF2/config_meta_F2.tsv --output data/DF2/$pheno.json --pheno $pheno
 done
 ```
 
