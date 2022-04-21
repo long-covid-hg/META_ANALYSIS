@@ -12,9 +12,12 @@ Fix 2:
 
 Fix 3:
 - "generate_makejson_input.sh"
- -> script edited to add two extra fields to the .json files: "af_alt" and "info", so that these can be incorporated into the meta_analysis.py script
- -> summary stats are used from "lift_postprocess" task instead of "harmonize", as "N" column is duplicated in "harmonize" task
+ -> script edited to add three extra fields to the .json files: "af_alt" and "info", so that these can be incorporated into the meta_analysis.py script
+ -> summary stats are used from "lift_postprocess" task instead of "harmonize", as "N" column is duplicated in "harmonize" task (which may break things later on in the pipeline)
+ -> tweaked the awk commands to make them more efficient
  -> script moved to "scripts" subfolder and README.md updated to account for this move
+- "makejson.py"
+_-> fixed a hard-coded value that meant only the first 12 entries for each study would be included in the subsequent .json files
 - "meta_analysis.py"
  -> "Study" class updated to make "af_alt" and "info" required data fields and conf variables (i.e. the .json files containing study info) and "Nsamples" as an optional field
  -> "af_alt", "info" and "Nsamples" now pulled out for each study, alongside "pos", "eff" (beta) and "pval".
@@ -38,6 +41,12 @@ Fix 6:
  -> only one set of results per study-ethnicity pair is included for each phenotype now
  -> this script's output file is now written to "data/DF2/" within the "META_ANALYSIS" folder, so the user needs to run it from within the "META_ANALYSIS" folder.
 
+Fix 7:
+- "meta.wdl": "post_filter" task
+ -> variants missing in first GWAS are no longer dropped
+ -> variants present in only one study are dropped
+ -> subset of fields extracted to keep filesize down: variant info fields, all_meta fields and lmso_meta fields
+
 TO DO:
 - add in columns to the meta-analysis results for:
  -> each study's MAF [X]
@@ -47,7 +56,5 @@ TO DO:
  -> overall sample size [X]
  -> overall (weighted) MAF [X]
  -> overall (weighted) INFO [X]
-- correct the final filtering step to remove variants found in just a single GWAS, rather than removing those with a beta of NA for the first study
 - use n_cases and n_controls in Nsamples not available in study files
-- allow analysis of variants not in first GWAS summstats file
 - fix harmonize.py so that "N" column is not added if already exists

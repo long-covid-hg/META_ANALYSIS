@@ -13,10 +13,11 @@ def tsv2json(input_file,output_file, pheno):
     # so we will store it in an array and move to 
     # next line in input_file.
     titles = [t.strip() for t in a.split('\t')]
+    nfields = len(titles)
     for line in file:
         if re.search(pheno, line.split('\t')[0]):
             d = {}
-            for t, f in zip(titles[1:13], line.split('\t')[1:13]):
+            for t, f in zip(titles[1:nfields], line.split('\t')[1:nfields]):
                 d[t] = f.strip().replace('gs://','/cromwell_root/')
             arr.append(d)
           
