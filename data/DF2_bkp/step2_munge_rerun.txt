@@ -1,4 +1,0 @@
-gs://long-covid-hg-cromwell/format/1ac66600-2bfb-49f0-be81-4638ac5eb55e/call-formatting/shard-24/JapanTaskForce_Okada_NQ1.3_F2_ALL_ALL_EAS_85_134_SAIGE_20220222.txt.formatted.gz	eas
-gs://long-covid-hg-cromwell/format/1ac66600-2bfb-49f0-be81-4638ac5eb55e/call-formatting/shard-25/JapanTaskForce_Okada_NQ2.3_F2_ALL_ALL_EAS_85_3451_SAIGE_20220222.txt.formatted.gz	eas
-gs://long-covid-hg-cromwell/format/1ac66600-2bfb-49f0-be81-4638ac5eb55e/call-formatting/shard-6/Ioannina_Mousas_NQ1.3_F2_ALL_ALL_EUR_145_174_SAIGE_20220323.txt.formatted.gz	nfe
-gs://long-covid-hg-cromwell/format/1ac66600-2bfb-49f0-be81-4638ac5eb55e/call-formatting/shard-7/Ioannina_Mousas_NQ2.3_F2_ALL_ALL_EUR_134_1039_SAIGE_20220322.txt.formatted.gz	nfe

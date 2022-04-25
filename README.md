@@ -34,7 +34,7 @@ sudo su
 
 If you have issues with X11 forwarding, run first
 ```
-/home/Analysis/x11_fix.sh
+/home/Analysis/META_ANALYSIS/scripts/x11_fix.sh
 ```
 
 ### 1.1 Format checking (format.wdl)
@@ -42,14 +42,15 @@ If you have issues with X11 forwarding, run first
 Check the summary statistic files submitted to the buckets by the contributing studies (run -> read the INFO printed and check the files created)
 ```
 cd /home/Analysis/
-./1_scan_buckets.sh -b bucketlist.txt
+META_ANALYSIS/scripts/1_scan_buckets.sh -b bucketlist.txt
 ```
+This will create in your current directory called Bucket_scan/YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - checking "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the LongCOVID filename specification and rerun this script, repeating the process until no more GWAS summary files are left unrecognised.
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (META_ANALYSIS/data/DF2/step1_format.txt)
 
 Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded for now, but could be automated]
 ```
-gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/20220331/conf/
+gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/
 ```
 
 Run this pipeline from META_ANALYSIS directory
@@ -61,7 +62,7 @@ Connect to Cromwell
 (Did you mean zone [us-central1-b] for instance: [long-covid-hg-cromwell] (Y/n)? [Y])
 ```
 lsof -ti:4999 | xargs kill -9
-python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 connect long-covid-hg-cromwell
+python3 CromwellInteract-master/cromwell_interact.py --port 4999 connect long-covid-hg-cromwell
 ```
 
 Change the date in the format.json (line 2)
@@ -71,7 +72,7 @@ vi wdl/format.json
 
 Run the format step
 ```
-python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/format.wdl --inputs wdl/format.json
+python3 CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/format.wdl --inputs wdl/format.json
 ```
 
 Save the HEX job id you got after submitting format.wdl (e.g. jobid=02390119-ac77-467e-8bc6-824cb70666b0; save these also to yourself in case the connection is lost)
@@ -81,27 +82,25 @@ jobid={jobid}
 
 For checking the status of the jobs, you can use e.g.
 ```
-covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary | tail -n 3
-covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary 
-covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --failed
-watch --interval=10 'covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 metadata $jobid --failed_jobs | tail -n 25'
+CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary | tail -n 3
+CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary 
+CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --failed
+watch --interval=10 'CromwellInteract-master/cromwell_interact.py --port 4999 metadata $jobid --failed_jobs | tail -n 25'
 ```
 
 ### 1.2 Munging (munge.wdl)
 
 Create a list of formatted files and ancestries (step2_munge.txt) 
-[change date] 
-[This step will be further automated]
+(JOBID= HEX ID(s) of formatting job(s))
 ```
-gsutil ls gs://long-covid-hg-cromwell/format/$jobid/call-formatting/**/*.gz
-vi data/DF2/step2_munge.txt
-gsutil cp data/DF2/step2_munge.txt gs://long-covid-hg-cromwell/20220331/conf/
+scripts/generate_munge_input.sh JOBID
+gsutil cp data/DF2/step2_munge.txt gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/
 ```
 
 (Connect to Cromwell again if the connection is not running anymore)
 ```
 lsof -ti:4999 | xargs kill -9
-covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 connect long-covid-hg-cromwell 
+CromwellInteract-master/cromwell_interact.py --port 4999 connect long-covid-hg-cromwell 
 ```
 
 Change the date in the munge.json (line 2)
@@ -111,7 +110,7 @@ vi wdl/munge.json
 
 #Run the munging step
 ```
-covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/munge.wdl --inputs wdl/munge.json
+CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/munge.wdl --inputs wdl/munge.json
 ```
 
 #Save the HEX job id you got after submitting munge.wdl 
@@ -126,43 +125,40 @@ Make configuration files for meta.wdl
 Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces]
 
 ```
-scripts/generate_makejson_input.sh {$jobid}
+scripts/generate_makejson_input.sh ${jobid}
 ```
 
 Create a .json file for each meta-analysis phenotype
 (Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py the for-loop generating step3_pheno_conf.txt)
 ```
-for pheno in W1.3 W2.3 WQ1.3 WQ2.3 N1.3 N2.3 NE1.3 NE2.3 NQ1.3 NQ2.3
+for pheno in `cut -f1 data/DF2/config_meta_F2.tsv | tail -n +2 | sort | uniq`
 do
-python3 scripts/makejson.py --input data/DF2/config_meta_F2.tsv --output data/DF2/$pheno.json --pheno $pheno
+   python3 scripts/makejson.py --input data/DF2/config_meta_F2.tsv --output data/DF2/$pheno.json --pheno $pheno
 done
 ```
 
 Create a list of munged summary stat locations (step3_sumstats_loc.txt)
-(First remove a possible old version of step3_sumstats_loc.txt so that the new does not get appended to it)
+(First back up your old version of step3_sumstats_loc.txt if you want to keep it, as this command will replace it)
 ```
-mv data/DF2/step3_sumstats_loc.txt data/DF2/step3_sumstats_loc.txt.bkp
-
-python3 scripts/makesumstats.py --input data/DF2/config_meta_F2.tsv --output data/DF2/step3_sumstats_loc.txt
+phenolist=`python3 scripts/makesumstats.py --input data/DF2/config_meta_F2.tsv --output data/DF2/step3_sumstats_loc.txt`
 ```
 
 Create a list of meta-analysis phenotypes to analyse ($pheno.json) [change date]
-
 (Note that this list should be the same (and in same order) as in the first for-loop creating the pheno.jsons and in the scripts/makesumstats.py)
 
-(First remove a possible old version of step3_pheno_conf.txt so that the new does not get appended to it)
+(Again, back up the old version of step3_pheno_conf.txt if you want to keep it)
 ```
-mv data/DF2/step3_pheno_conf.txt data/DF2/step3_pheno_conf.txt.bkp
-
-for pheno in W1.3 W2.3 WQ1.3 WQ2.3 N1.3 N2.3 NE1.3 NE2.3 NQ1.3 NQ2.3
-do
-echo "gs://long-covid-hg-cromwell/20220331/conf/$pheno.json" >> data/DF2/step3_pheno_conf.txt
-done
+{
+   for pheno in $phenolist
+   do
+      echo "gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/$pheno.json"
+   done
+} > data/DF2/step3_pheno_conf.txt
 ```
 
 Copy the files from DF2 to the cromwell bucket [change date]
 ```
-gsutil cp data/DF2/* gs://long-covid-hg-cromwell/20220331/conf/
+gsutil cp data/DF2/* gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/
 ```
 
 Change the dates in the meta.json (lines 2 and 3)
@@ -172,7 +168,7 @@ vi wdl/meta.json
 
 Run the meta-analysis step
 ```
-python3 covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/meta.wdl --inputs wdl/meta.json
+python3 CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/meta.wdl --inputs wdl/meta.json
 ```
 
 Save the HEX job id you got after submitting meta.wdl 
@@ -182,6 +178,6 @@ jobid={jobid}
 
 #Check status
 ```
-covid19-hgi/CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary | tail -n 7
+CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary | tail -n 7
 ```
 

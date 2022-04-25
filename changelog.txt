@@ -1,6 +1,40 @@
-# 2022/04/20
+### 2022/04/25
 
-Fix 1 (not in DF2_fix currently):
+- Cromwell clean-up
+ -> Moved "CromwellInteract-master/" folder up one directory (from "META_ANALYSIS/covid19-hgi/"), so it now sits directly within "META_ANALYSIS/"
+ -> Removed "META_ANALYSIS/covid19-hgi/" directory as nothing in it is used for LongCOVID meta-analysis
+ -> Deleted all .json files within "CromwellInteract-master/tmp/" pertaining to old jobs, except for "jobid.json"
+ -> Updated README.md to account for the new location of the Cromwell interaction tool
+
+- Previous runs clean-up
+ -> Removed old "conf.json" file and the "DF2_bkp/" folder within "META_ANALYSIS/data/"
+ -> Deleted all files in the "DF2" folder within "META_ANALYSIS/data/", to regerenate from scratch
+
+- wdl/json clean-up
+ -> Removed deprecated files "lift.json" and "lift.wdl" from "META_ANALYSIS/scripts/"
+ -> Removed deprecated files "munge_sumstats.json" and "munge_sumstats.wdl" from "META_ANALYSIS/scripts/"
+
+- "scripts/" folder clean-up
+ -> Removed "format" folder, as this is now incorporated into first step of pipeline
+
+- Incoporate external scripts
+ -> "x11_fix.sh" is now located in "META_ANALYSIS/scripts/" and README.md has been updated accordingly
+ -> "1_scan_buckets.sh" is now located in "META_ANALYSIS/scripts/" and README.md has been updated accordingly
+
+- Munge step input generation script
+ -> "generate_munge_input.sh" added to "META_ANALYSIS/scripts/" folder and can be run using "script/generate_munge_input.sh JOBID [JOBID2 JOBID3 ...]" 
+ -> automatically creates "data/DF2/step2_munge.txt"
+ -> README.md updated to incorporate use of this script
+
+- README.md update
+ -> Replaced instances of the date "20220331" with "[YYYYMMDD]" to make it clearer that users need to input their own dates
+ -> Edited the steps in 1.3 so that the input files "step3_sumstats_loc.txt" and "step3_pheno_conf.txt" are generated using the same phenotype order, as if they are not, the pipeline will break
+
+
+
+### 2022/04/20
+
+Fix 1:
 - "format.wdl" -> if the file format was SAIGE, the whole file was re-bgzipped, but now only the required columns are extracted (in a similar fashion to the other formats)
 
 Fix 2:

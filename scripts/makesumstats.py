@@ -21,6 +21,7 @@ def makesumstats(input_file,phenolist,output_file):
         os.remove(output_file)
     for pheno in phenolist:
         arr = []
+        print(pheno)
         file = open(input_file, 'r')
         for line in file:
             if re.search(pheno, line.split('\t')[0]):

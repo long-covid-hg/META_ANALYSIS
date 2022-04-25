@@ -1,4 +1,0 @@
-{
-    "meta_het_spec.input_file": "gs://covid19-hg-analysis/20201215/conf/B2C2_het_new",
-    "meta_het_spec.run.docker": "gcr.io/covid-19-hg/meta:1d50c"
-}

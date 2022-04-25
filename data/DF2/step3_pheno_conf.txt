@@ -1,2 +1,0 @@
-gs://long-covid-hg-cromwell/20220331/conf/W1.3.json
-gs://long-covid-hg-cromwell/20220331/conf/W2.3.json
