@@ -18,9 +18,11 @@
     "munge.lift.b38_assembly_fasta": "gs://genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.fasta",
     "munge.lift.b38_assembly_dict": "gs://genomics-public-data/resources/broad/hg38/v0/Homo_sapiens_assembly38.dict",
     "munge.lift_postprocess.docker": "gcr.io/long-covid-hg/bioinformatics:0.7",
-    "munge.harmonize.docker": "gcr.io/long-covid-hg/meta:7.42",
+    "munge.harmonize.docker": "gcr.io/long-covid-hg/meta:7.44",
+    "munge.harmonize.script": "gs://long-covid-hg-cromwell/20220331/scripts/harmonize.py",
     "munge.gnomad_ref_template": "gs://long-covid-hg-cromwell/gnomad/v3/filter/gnomad_v3_b38_ref_POP.gz",
     "munge.harmonize.options": "--pre_aligned",
-    "munge.plot.docker": "gcr.io/long-covid-hg/meta:7.42",
+    "munge.plot.docker": "gcr.io/long-covid-hg/meta:7.44",
+    "munge.plot.script": "gs://long-covid-hg-cromwell/20220331/scripts/qqplot.R",
     "munge.plot.loglog_ylim": 10
 }

@@ -90,6 +90,15 @@ watch --interval=10 'CromwellInteract-master/cromwell_interact.py --port 4999 me
 
 ### 1.2 Munging (munge.wdl)
 
+First, copy the required scripts to the relevant bucket folder:
+```
+for sfile in harmonize.py meta_analysis.py qqplot.R
+do
+   gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/[YYYYMMDD]/scripts/
+done
+```
+and then edit the dates in the munge.json file's options to correspond to your [YYYMMDD].
+
 Create a list of formatted files and ancestries (step2_munge.txt) 
 (JOBID= HEX ID(s) of formatting job(s))
 ```
@@ -119,6 +128,15 @@ jobid={jobid}
 ```
 
 ### 1.3 Meta-analysis (meta.wdl)
+
+First, copy the required scripts to the bucket location for this run (if you haven't already in the previous munging step):
+```
+for sfile in harmonize.py meta_analysis.py qqplot.R
+do
+   gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/[YYYYMMDD]/scripts/
+done
+```
+and then edit all the dates in the wdl/meta.json file's options to correspond to your [YYYMMDD].
 
 Make configuration files for meta.wdl
 

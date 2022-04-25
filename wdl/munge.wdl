@@ -423,6 +423,8 @@ task harmonize {
         File gnomad_ref
         String options
 
+        File script
+
         String base = basename(sumstat_file, ".tsv.gz")
         String gnomad_ref_base = basename(gnomad_ref)
     }
@@ -440,7 +442,7 @@ task harmonize {
         mv ~{gnomad_ref} ~{gnomad_ref_base}
 
         echo "`date` harmonizing stats with gnomAD"
-        python3 /META_ANALYSIS/scripts/harmonize.py ~{base} ~{gnomad_ref_base} 0 ~{options} \
+        python3 ~{script} ~{base} ~{gnomad_ref_base} 0 ~{options} \
         | bgzip > ~{base}.~{gnomad_ref_base}
         
         tabix -s 1 -b 2 -e 2 ~{base}.~{gnomad_ref_base}
@@ -473,6 +475,8 @@ task plot {
         String docker
         Int loglog_ylim
 
+        File script
+
         String base = basename(sumstat_file)
     }
 
@@ -495,7 +499,7 @@ task plot {
         dev.off()
         EOF
 
-        /META_ANALYSIS/scripts/qqplot.R --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col "pval" --loglog_ylim ~{loglog_ylim}
+        ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col "pval" --loglog_ylim ~{loglog_ylim}
 
     >>>
 

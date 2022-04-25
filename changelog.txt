@@ -21,6 +21,15 @@
  -> "x11_fix.sh" is now located in "META_ANALYSIS/scripts/" and README.md has been updated accordingly
  -> "1_scan_buckets.sh" is now located in "META_ANALYSIS/scripts/" and README.md has been updated accordingly
 
+- Docker image "meta" now agnostic to script version
+ -> Removed all files from internal folder "META_ANALYSIS/scripts/" from meta Docker image, created new image, version 7.44
+ -> Updated munge.wdl and meta.wdl to point to new Docker image version (7.44)
+ -> Added "munge.harmonize.script" and "munge.plot.script" options pointing to new bucket locations of the harmonize.py and qqplot.R scripts in "wdl/munge.json"
+ -> Added "script" as an input variable to "harmonize" and "plot" tasks and replaced hard-coded references to the scripts with "~{script}" in "wdl/munge.wdl"
+ -> Added "meta_analysis.run_range.script" and "meta_analysis.meta_qq.script" options pointing to the new locations of "meta_analysis.py" and "qqplot.R" in "wdl/meta.json"
+ -> Added "script" as an input variable to "run_range" and "meta_qq" tasks and replaced hard-coded references to the scripts with "~{script}" in "wdl/meta.wdl"
+ -> Added instructions to README.md for copying required scripts to a bucket folder (as they are no longer provided in the Dcker images)
+
 - Munge step input generation script
  -> "generate_munge_input.sh" added to "META_ANALYSIS/scripts/" folder and can be run using "script/generate_munge_input.sh JOBID [JOBID2 JOBID3 ...]" 
  -> automatically creates "data/DF2/step2_munge.txt"

@@ -65,6 +65,8 @@ task run_range {
         String chrom
         File conf
 
+        File script
+
         String docker
         String method
         String opts
@@ -80,7 +82,7 @@ task run_range {
         echo "chromosome: ~{chrom}"
         echo "conf: ~{conf}"
 
-        /META_ANALYSIS/scripts/meta_analysis.py ~{conf} ~{pheno}_chr~{chrom}_meta_out.tsv ~{method} ~{opts} --chrom ~{chrom}
+        ~{script} ~{conf} ~{pheno}_chr~{chrom}_meta_out.tsv ~{method} ~{opts} --chrom ~{chrom}
 
         echo "`date` done"
     >>>
@@ -247,6 +249,8 @@ task meta_qq {
         String docker
         String pvals_to_plot
 
+        File script
+
         String base = basename(meta_file)
     }
 
@@ -256,7 +260,7 @@ task meta_qq {
 
         mv ~{meta_file} ~{base}
 
-        /META_ANALYSIS/scripts/qqplot.R --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col ~{pvals_to_plot} --loglog_ylim ~{loglog_ylim}
+        ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col ~{pvals_to_plot} --loglog_ylim ~{loglog_ylim}
 
     >>>
 
