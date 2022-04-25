@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from meta_analysis import flip_strand, is_symmetric, format_num
 import argparse
 import gzip
 import numpy
@@ -7,6 +6,14 @@ from typing import Dict, Tuple, List
 
 flip = {'A':'T','C':'G','T':'A','G':'C'}
 
+def flip_strand( allele):
+    return "".join([ flip[a] for a in allele])
+
+def is_symmetric(a1, a2):
+    return (a1=="A" and a2=="T") or (a1=="T" and a2=="A") or (a1=="C" and a2=="G") or (a1=="G" and a2=="C")
+
+def format_num(num, precision=5):
+    return numpy.format_float_scientific(num, precision=precision) if num is not None else "NA"
 
 class Variant():
 
