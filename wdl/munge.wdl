@@ -499,7 +499,7 @@ task plot {
         dev.off()
         EOF
 
-        ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col "pval" --loglog_ylim ~{loglog_ylim}
+        Rscript ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col "pval" --loglog_ylim ~{loglog_ylim}
 
     >>>
 
