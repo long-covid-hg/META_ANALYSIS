@@ -101,6 +101,7 @@ task clean_filter {
                 }
                 print $0
             } NR>1 {
+                for(i=1;i<=NF;i++) {if(length($i)<1){next}};
                 sub("^0", "", $a["#CHR"]); sub("^chr", "", $a["#CHR"]); sub("^X", "23", $a["#CHR"]); sub("^Y", "24", $a["#CHR"]);
                 if ($a["#CHR"] ~ /^[0-9]+$/ && $a["pval"] > 0 && $a["beta"] < 1e6 && $a["beta"] > -1e6 && $a["af_alt"]>=~{min_af} && (1-$a["af_alt"])>=~{min_af} && $a["~{info_col}"]>=~{min_info} && $0!~/NA/ ) {
                     printf $1
