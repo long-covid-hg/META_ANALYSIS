@@ -82,7 +82,7 @@ task run_range {
         echo "chromosome: ~{chrom}"
         echo "conf: ~{conf}"
 
-        ~{script} ~{conf} ~{pheno}_chr~{chrom}_meta_out.tsv ~{method} ~{opts} --chrom ~{chrom}
+        python3 ~{script} ~{conf} ~{pheno}_chr~{chrom}_meta_out.tsv ~{method} ~{opts} --chrom ~{chrom}
 
         echo "`date` done"
     >>>
@@ -260,7 +260,7 @@ task meta_qq {
 
         mv ~{meta_file} ~{base}
 
-        ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col ~{pvals_to_plot} --loglog_ylim ~{loglog_ylim}
+        Rscript ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col ~{pvals_to_plot} --loglog_ylim ~{loglog_ylim}
 
     >>>
 

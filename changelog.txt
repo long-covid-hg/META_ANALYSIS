@@ -3,6 +3,8 @@
 - Fixing problems caused by change in Docker image
  -> "harmonize.py" script was a newer version in the "meta" Docker image, so created a copy from the old Docker image and replaced the current version with it
  -> "harmonize.py" which imported three functions from "meta_analysis.py" - these have now been added into the script and the "from meta_analysis import ..." line removed
+ -> Executable permissions for qqplot.R causing problems, so replaced "~{script}" with "Rscript ~{script}" in "munge.wdl"
+ -> Pre-empted the same permissions issues for "meta_analysis.py" (replaced with "python3 ~{script}") and "qqplot.R" (replaced with "Rscript ~{script}") in meta.wdl
 
 
 ### 2022/04/25
