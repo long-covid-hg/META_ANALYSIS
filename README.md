@@ -85,7 +85,7 @@ For checking the status of the jobs, you can use e.g.
 CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary | tail -n 3
 CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary 
 CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --failed
-watch --interval=10 'CromwellInteract-master/cromwell_interact.py --port 4999 metadata $jobid --failed_jobs | tail -n 25'
+watch --interval=10 "CromwellInteract-master/cromwell_interact.py --port 4999 metadata $jobid --failed_jobs | tail -n 25"
 ```
 
 ### 1.2 Munging (munge.wdl)

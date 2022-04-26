@@ -1,3 +1,10 @@
+### 2022/04/26
+
+- Fixing problems caused by change in Docker image
+ -> "harmonize.py" script was a newer version in the "meta" Docker image, so created a copy from the old Docker image and replaced the current version with it
+ -> "harmonize.py" which imported three functions from "meta_analysis.py" - these have now been added into the script and the "from meta_analysis import ..." line removed
+
+
 ### 2022/04/25
 
 - Cromwell clean-up
