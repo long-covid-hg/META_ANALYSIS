@@ -313,7 +313,7 @@ class VariantData:
         return self.z_scr
 
     def __str__(self):
-        return "chr:{} pos:{} ref:{} alt:{} beta:{} pval:{} se:{} ".format(self.chr, self.pos, self.ref, self.alt, self.beta, self.pval, self.se)
+        return "chr:{} pos:{} ref:{} alt:{} af_alt:{} beta:{} pval:{} se:{} info:{}".format(self.chr, self.pos, self.ref, self.alt, self.af_alt, self.beta, self.pval, self.se, self.info)
 
 
 class Study:
