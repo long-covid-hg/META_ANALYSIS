@@ -48,9 +48,10 @@ This will create in your current directory called Bucket_scan/YYYY.MM.DD/ and a 
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (META_ANALYSIS/data/DF2/step1_format.txt)
 
-Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded for now, but could be automated]
+Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded in the .json files so far]. First set the analysis date variable in YYYYMMDD format (e.g. AnalysisDate=20220430].
 ```
-gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/
+AnalysisDate=[YYYYMMDD]
+gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
 
 Run this pipeline from META_ANALYSIS directory
@@ -94,16 +95,16 @@ First, copy the required scripts to the relevant bucket folder:
 ```
 for sfile in harmonize.py meta_analysis.py qqplot.R
 do
-   gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/[YYYYMMDD]/scripts/
+   gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/$AnalysisDate/scripts/
 done
 ```
-and then edit the dates in the munge.json file's options to correspond to your [YYYMMDD].
+and then edit the dates in the munge.json file's options to correspond to your AnalysisDate [YYYMMDD].
 
 Create a list of formatted files and ancestries (step2_munge.txt) 
 (JOBID= HEX ID(s) of formatting job(s))
 ```
 scripts/generate_munge_input.sh JOBID
-gsutil cp data/DF2/step2_munge.txt gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/
+gsutil cp data/DF2/step2_munge.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
 
 (Connect to Cromwell again if the connection is not running anymore)
@@ -129,14 +130,19 @@ jobid={jobid}
 
 ### 1.3 Meta-analysis (meta.wdl)
 
+Use the same analysis date as with the fromat and munging steps
+```
+AnalysisDate={[YYYYMMDD]}
+```
+
 First, copy the required scripts to the bucket location for this run (if you haven't already in the previous munging step):
 ```
 for sfile in harmonize.py meta_analysis.py qqplot.R
 do
-   gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/[YYYYMMDD]/scripts/
+   gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/$AnalysisDate/scripts/
 done
 ```
-and then edit all the dates in the wdl/meta.json file's options to correspond to your [YYYMMDD].
+and then edit all the dates in the wdl/meta.json file's options to correspond to your AnalysisDate [YYYMMDD].
 
 Make configuration files for meta.wdl
 
@@ -147,7 +153,7 @@ scripts/generate_makejson_input.sh ${jobid}
 ```
 
 Create a .json file for each meta-analysis phenotype
-(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py the for-loop generating step3_pheno_conf.txt)
+(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt)
 ```
 for pheno in `cut -f1 data/DF2/config_meta_F2.tsv | tail -n +2 | sort | uniq`
 do
@@ -161,30 +167,26 @@ Create a list of munged summary stat locations (step3_sumstats_loc.txt)
 phenolist=`python3 scripts/makesumstats.py --input data/DF2/config_meta_F2.tsv --output data/DF2/step3_sumstats_loc.txt`
 ```
 
-Create a list of meta-analysis phenotypes to analyse ($pheno.json) [change date]
-(Note that this list should be the same (and in same order) as in the first for-loop creating the pheno.jsons and in the scripts/makesumstats.py)
+Create a list of meta-analysis phenotypes to analyse (step3_pheno_conf.txt) 
+(Note that this list should be the same (and in the same order) as in the first for-loop creating the pheno.jsons and in the scripts/makesumstats.py)
 
 (Again, back up the old version of step3_pheno_conf.txt if you want to keep it)
 ```
 {
    for pheno in $phenolist
    do
-      echo "gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/$pheno.json"
+      echo "gs://long-covid-hg-cromwell/$AnalysisDate/conf/$pheno.json"
    done
 } > data/DF2/step3_pheno_conf.txt
 ```
 
-Copy the files from DF2 to the cromwell bucket [change date]
+Copy the files from DF2 to the cromwell bucket 
 ```
-gsutil cp data/DF2/* gs://long-covid-hg-cromwell/[YYYYMMDD]/conf/
-```
-
-Change the dates in the meta.json (lines 2 and 3)
-```
-vi wdl/meta.json
+gsutil cp data/DF2/* gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
 
-Run the meta-analysis step
+
+Run the meta-analysis step (with the correct analysis dates updated in the meta.json)
 ```
 python3 CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/meta.wdl --inputs wdl/meta.json
 ```
