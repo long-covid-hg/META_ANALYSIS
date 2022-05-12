@@ -12,19 +12,22 @@ workflow munge {
         call clean_filter {
             input: sumstat_file=sumstat_file[0]
         }
-        call sumstat_to_vcf {
-            input: sumstat_file=clean_filter.out
-        }
-        call lift {
-            input: sumstat_vcf=sumstat_to_vcf.vcf
-        }
-        call lift_postprocess {
-            input:
-                lifted_vcf=lift.lifted_variants_vcf,
-                sumstat_file=clean_filter.out
-        }
+        if (clean_filter.is37) {
+            call sumstat_to_vcf {
+                input: sumstat_file=clean_filter.out
+            }
+            call lift {
+                input: sumstat_vcf=sumstat_to_vcf.vcf
+            }
+            call lift_postprocess {
+                input: lifted_vcf=lift.lifted_variants_vcf,sumstat_file=clean_filter.out
+            }
+	}
         call harmonize {
-            input: sumstat_file=lift_postprocess.lifted_variants, gnomad_ref=sub(gnomad_ref_template, "POP", sumstat_file[1])
+            input:
+		sumstat_file = if clean_filter.is37 then lift_postprocess.lifted_variants else clean_filter.out,
+		extra_opts = if clean_filter.is37 then "--pre_aligned" else "",
+		gnomad_ref = sub(gnomad_ref_template, "POP", sumstat_file[1])
         }
         call plot {
             input: sumstat_file=harmonize.out
@@ -45,6 +48,9 @@ task clean_filter {
 
     input {
         File sumstat_file
+
+	File b37_ref
+	File b38_ref
 
         String docker
         String chr_col
@@ -134,6 +140,21 @@ task clean_filter {
         if [ $(wc -l n.tmp | cut -d' ' -f1) != 1 ]; then echo "file not square"; exit 1; fi
         if [ $(wc -l chr.tmp | cut -d' ' -f1) -lt 22 ]; then echo "less than 22 chromosomes"; exit 1; fi
 
+	tabix -R ~{b37_ref} ~{outfile} | wc -l > b37.txt && echo "`date` `cat b37.txt` chr 21 positions build 37"
+	tabix -R ~{b38_ref} ~{outfile} | wc -l > b38.txt && echo "`date` `cat b38.txt` chr 21 positions build 38"
+
+        if ((`cat b37.txt` == 0 && `cat b38.txt` == 0))
+	then
+            echo "`date` no chr 21 positions found in either build, quitting"
+            touch is37
+            exit 1
+        elif ((`cat b37.txt` > `cat b38.txt`))
+	then
+            echo "true" > is37
+        else
+            echo "false" > is37
+        fi
+
         echo "`date` done"
 
     >>>
@@ -141,6 +162,7 @@ task clean_filter {
     output {
         File out = outfile
         File tbi = outfile + ".tbi"
+	Boolean is37 = read_boolean("is37")
     }
 
     runtime {
@@ -423,6 +445,7 @@ task harmonize {
         String docker
         File gnomad_ref
         String options
+	String extra_opts
 
         File script
 
@@ -443,7 +466,7 @@ task harmonize {
         mv ~{gnomad_ref} ~{gnomad_ref_base}
 
         echo "`date` harmonizing stats with gnomAD"
-        python3 ~{script} ~{base} ~{gnomad_ref_base} 0 ~{options} \
+        python3 ~{script} ~{base} ~{gnomad_ref_base} 0 ~{options} ~{extra_opts} \
         | bgzip > ~{base}.~{gnomad_ref_base}
         
         tabix -s 1 -b 2 -e 2 ~{base}.~{gnomad_ref_base}
