@@ -14,18 +14,18 @@ workflow munge {
         }
         if (clean_filter.is37) {
             call sumstat_to_vcf {
-                input: sumstat_file=clean_filter.out
+                input: sumstat_file=select_first([clean_filter.out])
             }
             call lift {
-                input: sumstat_vcf=sumstat_to_vcf.vcf
+                input: sumstat_vcf=select_first([sumstat_to_vcf.vcf])
             }
             call lift_postprocess {
-                input: lifted_vcf=lift.lifted_variants_vcf,sumstat_file=clean_filter.out
+                input: lifted_vcf=select_first([lift.lifted_variants_vcf]),sumstat_file=select_first([clean_filter.out])
             }
         }
         call harmonize {
             input:
-                sumstat_file = if clean_filter.is37 then lift_postprocess.lifted_variants else clean_filter.out,
+                sumstat_file = if clean_filter.is37 then select_first([lift_postprocess.lifted_variants]) else clean_filter.out,
                 extra_opts = if clean_filter.is37 then "--pre_aligned" else "",
                 gnomad_ref = sub(gnomad_ref_template, "POP", sumstat_file[1])
         }
