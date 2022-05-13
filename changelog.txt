@@ -1,11 +1,13 @@
-### 2022/05/12
+### 2022/05/13
 
 - Reinstating b38 study filter in the munging step
  -> "munge.json" has been updated to include the "b37_ref" and "b38_ref" file as input in the "clean_filter" task so that genome build of input summary files can be identified
+ -> "munge.wdl" (main workflow) now passes "is37", which is output by the "clean_filter" task, to the "lift" and "harmonize" tasks as input
  -> "munge.wdl", "clean_filter" task - "b37_ref" and "b38_ref" added as input files (to mirror changes made in "munge.json")
  -> "munge.wdl", "clean_filter" task - tabix commands usings to generate counts based on "b37_ref" and "b38_ref" files and file "is37" created containing "true" (b37) or "false" (b38), which is now output by this task as a Boolean variable
- -> "munge.wdl", "harmonize" task - "extra_opts" added as input string so that "--pre-aligned" is optional and "~{extra_opts}" option added to harmonize script execution
- -> "munge.wdl" (main workflow) now has "sumstat_to_vcf", "lift" and "lift_postprocess" tasks performed only if Boolean "is37" is true (i.e. these steps are skipped if input summstats are in b38). Task "harmonize" now has varying input: sumstats file passed from "clean_filter" output if original summstats were b38 or from "lift_postprocess" if they were b37. Input string "extra_opts" (passed as argument to harmonize.py") set to "--pre_aligned" if original summstats were b37 and "" otherwise
+ -> "munge.wdl", "lift" task now only performs liftover if "is37" is true, otherwise input vcf has "FILTER" column set to "PASS" and "INFO" set to "AlreadyB38" and then written to output
+ -> "munge.wdl", "lift_postprocess" task updated so that columns related to pre-liftover chromosome, position and alleles are set to "." (missing) if "INFO" column contains "AlreadyB38" (i.e. "is37" is true)
+ -> "munge.wdl", "harmonize" task adds the "--pre-aligned" option to the harmonize.py call if the original summary file was in b37 (and if "--pre-aligned" not already contained within the options set in "munge.json")
 
 
 ### 2022/04/26

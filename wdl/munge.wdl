@@ -12,21 +12,19 @@ workflow munge {
         call clean_filter {
             input: sumstat_file=sumstat_file[0]
         }
-        if (clean_filter.is37) {
-            call sumstat_to_vcf {
-                input: sumstat_file=clean_filter.out
-            }
-            call lift {
-                input: sumstat_vcf=sumstat_to_vcf.vcf
-            }
-            call lift_postprocess {
-                input: lifted_vcf=lift.lifted_variants_vcf,sumstat_file=clean_filter.out
-            }
+        call sumstat_to_vcf {
+            input: sumstat_file=clean_filter.out
+        }
+        call lift {
+            input: sumstat_vcf=sumstat_to_vcf.vcf,is37=clean_filter.is37
+        }
+        call lift_postprocess {
+            input: lifted_vcf=lift.lifted_variants_vcf,sumstat_file=clean_filter.out
         }
         call harmonize {
             input:
-                sumstat_file = if clean_filter.is37 then lift_postprocess.lifted_variants else clean_filter.out,
-                extra_opts = if clean_filter.is37 then "--pre_aligned" else "",
+                sumstat_file = lift_postprocess.lifted_variants,
+                is37=clean_filter.is37,
                 gnomad_ref = sub(gnomad_ref_template, "POP", sumstat_file[1])
         }
         call plot {
@@ -284,6 +282,8 @@ task lift {
         File b38_assembly_fasta
         File b38_assembly_dict
 
+        Boolean is37
+
         String base = basename(sumstat_vcf, ".vcf.gz")
     }
 
@@ -291,15 +291,26 @@ task lift {
 
         set -euxo pipefail
 
-        echo "`date` lifting to build 38"
-        java -jar /usr/picard/picard.jar LiftoverVcf \
-            -I ~{sumstat_vcf} \
-            -O ~{base}.GRCh38.vcf \
-            --CHAIN ~{chainfile} \
-            --REJECT rejected_variants.vcf \
-            -R ~{b38_assembly_fasta} \
-            --MAX_RECORDS_IN_RAM 500000 \
-            --RECOVER_SWAPPED_REF_ALT true
+        if [ "~{is37}" = true ]
+        then
+
+           echo "`date` lifting to build 38"
+           java -jar /usr/picard/picard.jar LiftoverVcf \
+              -I ~{sumstat_vcf} \
+              -O ~{base}.GRCh38.vcf \
+              --CHAIN ~{chainfile} \
+              --REJECT rejected_variants.vcf \
+              -R ~{b38_assembly_fasta} \
+              --MAX_RECORDS_IN_RAM 500000 \
+              --RECOVER_SWAPPED_REF_ALT true
+
+        else
+
+           echo "`date` already in build 38... skipping liftover step"
+           zcat ~{sumstat_vcf} | awk 'BEGIN{OFS="\t"}$0~/^#/{print;next}{$7="PASS";$8="AlreadyB38";print}' > ~{base}.GRCh38.vcf
+           touch rejected_variants.vcf
+
+        fi
 
     >>>
 
@@ -403,7 +414,11 @@ task lift_postprocess {
                         sumstat_beta = sumstat_line[sumstat_h_idx[beta_col]] if sumstat_line[sumstat_h_idx[beta_col]] != "NA" else None
                         sumstat_line[sumstat_h_idx[af_col]] = str(1 - float(sumstat_af) if sumstat_af is not None else "NA")
                         sumstat_line[sumstat_h_idx[beta_col]] = str(-1 * float(sumstat_beta) if sumstat_beta is not None else "NA")
-                    sumstat_line.extend([str(old_chr), str(old_pos), old_ref, old_alt, info])
+                    if 'AlreadyB38' in info_list:
+                        sumstat_line.extend(['.', '.', '.', '.', info])
+                    else:
+                        sumstat_line.extend([str(old_chr), str(old_pos), old_ref, old_alt, info])
+
                     print(delim.join(sumstat_line))
                     sumstat_line = s_f.readline().strip().split(delim)
                     try:
@@ -445,7 +460,8 @@ task harmonize {
         String docker
         File gnomad_ref
         String options
-        String extra_opts
+
+        Boolean is37
 
         File script
 
@@ -465,8 +481,16 @@ task harmonize {
         mv ~{sumstat_file} ~{base}
         mv ~{gnomad_ref} ~{gnomad_ref_base}
 
+        alloptions="~{options}"
+
+        if [ "~{is37}" = true ]
+        then
+            optprealigned="--pre_aligned"
+            test "${alloptions#*$optprealigned}" != "$alloptions" || alloptions="$alloptions $optprealigned"
+        fi 
+
         echo "`date` harmonizing stats with gnomAD"
-        python3 ~{script} ~{base} ~{gnomad_ref_base} 0 ~{options} ~{extra_opts} \
+        python3 ~{script} ~{base} ~{gnomad_ref_base} 0 $alloptions \
         | bgzip > ~{base}.~{gnomad_ref_base}
         
         tabix -s 1 -b 2 -e 2 ~{base}.~{gnomad_ref_base}
