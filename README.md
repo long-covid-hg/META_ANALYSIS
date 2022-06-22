@@ -39,24 +39,25 @@ If you have issues with X11 forwarding, run first
 
 ### 1.1 Format checking (format.wdl)
 
+Run this pipeline from the META_ANALYSIS directory
+```
+cd /home/Analysis/META_ANALYSIS/
+```
+
 Check the summary statistic files submitted to the buckets by the contributing studies (run -> read the INFO printed and check the files created)
 ```
-cd /home/Analysis/
-META_ANALYSIS/scripts/1_scan_buckets.sh -b bucketlist.txt
+scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 ```
-This will create in your current directory called Bucket_scan/YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - checking "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the LongCOVID filename specification and rerun this script, repeating the process until no more GWAS summary files are left unrecognised.
+This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the LongCOVID filename specification and rerun this script, repeating the process until no more GWAS summary files are left unrecognised.
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (META_ANALYSIS/data/DF2/step1_format.txt)
 
 Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded in the .json files so far]. First set the analysis date variable in YYYYMMDD format (e.g. AnalysisDate=20220430].
 ```
 AnalysisDate=[YYYYMMDD]
-gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
-```
-
-Run this pipeline from META_ANALYSIS directory
-```
-cd /home/Analysis/META_ANALYSIS/
+DataFreeze=[DF3]
+mkdir data/$DataFreeze
+gsutil cp data/$DataFreeze/step1_format.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
 
 Connect to Cromwell 
@@ -98,24 +99,22 @@ do
    gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/$AnalysisDate/scripts/
 done
 ```
-and then edit the dates in the munge.json file's options to correspond to your AnalysisDate [YYYMMDD].
+Edit the dates in the munge.json file's options (on lines 2, 24, 28) to correspond to your AnalysisDate [YYYMMDD]
+```
+vi wdl/munge.json
+```
 
 Create a list of formatted files and ancestries (step2_munge.txt) 
 (JOBID= HEX ID(s) of formatting job(s))
 ```
-scripts/generate_munge_input.sh JOBID
-gsutil cp data/DF2/step2_munge.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
+scripts/generate_munge_input.sh $jobid
+gsutil cp data/$DataFreeze/step2_munge.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
 
 (Connect to Cromwell again if the connection is not running anymore)
 ```
 lsof -ti:4999 | xargs kill -9
 CromwellInteract-master/cromwell_interact.py --port 4999 connect long-covid-hg-cromwell 
-```
-
-Change the date in the munge.json (line 2)
-```
-vi wdl/munge.json
 ```
 
 #Run the munging step
@@ -142,29 +141,33 @@ do
    gsutil cp scripts/$sfile gs://long-covid-hg-cromwell/$AnalysisDate/scripts/
 done
 ```
-and then edit all the dates in the wdl/meta.json file's options to correspond to your AnalysisDate [YYYMMDD].
+Edit all the dates in the wdl/meta.json file's options (lines 2, 3, 5, 12) to correspond to your AnalysisDate [YYYMMDD]
+```
+vi wdl/meta.json
+```
 
 Make configuration files for meta.wdl
 
-Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces]
-
+Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces] 
+Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) 
+[DataFreeze is still hard-coded in the scripts generate_makejson_input.sh and makejson.py - change if you're running other than DF3]
 ```
 scripts/generate_makejson_input.sh ${jobid}
 ```
 
 Create a .json file for each meta-analysis phenotype
-(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt)
+(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt) 
 ```
-for pheno in `cut -f1 data/DF2/config_meta_F2.tsv | tail -n +2 | sort | uniq`
+for pheno in `cut -f1 data/$DataFreeze/config_meta_F3.tsv | tail -n +2 | sort | uniq`
 do
-   python3 scripts/makejson.py --input data/DF2/config_meta_F2.tsv --output data/DF2/$pheno.json --pheno $pheno
+   python3 scripts/makejson.py --input data/$DataFreeze/config_meta_F3.tsv --output data/$DataFreeze/$pheno.json --pheno $pheno
 done
 ```
 
 Create a list of munged summary stat locations (step3_sumstats_loc.txt)
 (First back up your old version of step3_sumstats_loc.txt if you want to keep it, as this command will replace it)
 ```
-phenolist=`python3 scripts/makesumstats.py --input data/DF2/config_meta_F2.tsv --output data/DF2/step3_sumstats_loc.txt`
+phenolist=`python3 scripts/makesumstats.py --input data/$DataFreeze/config_meta_F3.tsv --output data/$DataFreeze/step3_sumstats_loc.txt`
 ```
 
 Create a list of meta-analysis phenotypes to analyse (step3_pheno_conf.txt) 
@@ -177,17 +180,20 @@ Create a list of meta-analysis phenotypes to analyse (step3_pheno_conf.txt)
    do
       echo "gs://long-covid-hg-cromwell/$AnalysisDate/conf/$pheno.json"
    done
-} > data/DF2/step3_pheno_conf.txt
+} > data/$DataFreeze/step3_pheno_conf.txt
 ```
 
-Copy the files from DF2 to the cromwell bucket 
+Copy the files from $DataFreeze to the cromwell bucket 
 ```
-gsutil cp data/DF2/* gs://long-covid-hg-cromwell/$AnalysisDate/conf/
+gsutil cp data/$DataFreeze/* gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
 
 
 Run the meta-analysis step (with the correct analysis dates updated in the meta.json)
 ```
+lsof -ti:4999 | xargs kill -9
+CromwellInteract-master/cromwell_interact.py --port 4999 connect long-covid-hg-cromwell 
+
 python3 CromwellInteract-master/cromwell_interact.py --port 4999 submit --wdl wdl/meta.wdl --inputs wdl/meta.json
 ```
 
