@@ -151,9 +151,9 @@ vi wdl/meta.json
 
 Make configuration files for meta.wdl
 
-Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces] 
-Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F2.tsv) 
-[DataFreeze is still hard-coded in the scripts generate_makejson_input.sh and makejson.py - change if you're running other than DF3]
+Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F4.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces] 
+Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F4.tsv) 
+[DataFreeze is still hard-coded in the scripts generate_makejson_input.sh and makejson.py - change if you're running other than DF4]
 ```
 scripts/generate_makejson_input.sh ${jobid}
 ```
@@ -161,16 +161,16 @@ scripts/generate_makejson_input.sh ${jobid}
 Create a .json file for each meta-analysis phenotype
 (Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt) 
 ```
-for pheno in `cut -f1 data/$DataFreeze/config_meta_F3.tsv | tail -n +2 | sort | uniq`
+for pheno in `cut -f1 data/$DataFreeze/config_meta_F4.tsv | tail -n +2 | sort | uniq`
 do
-   python3 scripts/makejson.py --input data/$DataFreeze/config_meta_F3.tsv --output data/$DataFreeze/$pheno.json --pheno $pheno
+   python3 scripts/makejson.py --input data/$DataFreeze/config_meta_F4.tsv --output data/$DataFreeze/$pheno.json --pheno $pheno
 done
 ```
 
 Create a list of munged summary stat locations (step3_sumstats_loc.txt)
 (First back up your old version of step3_sumstats_loc.txt if you want to keep it, as this command will replace it)
 ```
-phenolist=`python3 scripts/makesumstats.py --input data/$DataFreeze/config_meta_F3.tsv --output data/$DataFreeze/step3_sumstats_loc.txt`
+phenolist=`python3 scripts/makesumstats.py --input data/$DataFreeze/config_meta_F4.tsv --output data/$DataFreeze/step3_sumstats_loc.txt`
 ```
 
 Create a list of meta-analysis phenotypes to analyse (step3_pheno_conf.txt) 
