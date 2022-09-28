@@ -151,10 +151,11 @@ vi wdl/meta.json
 
 Make configuration files for meta.wdl
 
-Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F4.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces] 
-[DataFreeze is still hard-coded in the scripts generate_makejson_input.sh and makejson.py - change if you're running other than DF4]
+##OBS! This script is not prioritising the different phenotypes correctly for the meta-analyses - has to be fixed before using##
+##Run a script generating a list of the munged summary stat files to meta-analyse (config_meta_F4.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces] 
+[DataFreeze is still hard-coded in the scripts generate_makejson_input.sh and makejson.py - change if you're running other than DF4]##
 ```
-scripts/generate_makejson_input.sh ${jobid}
+##scripts/generate_makejson_input.sh ${jobid}##
 ```
 
 Create a .json file for each meta-analysis phenotype
