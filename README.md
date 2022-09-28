@@ -159,7 +159,6 @@ Make configuration files for meta.wdl
 ```
 
 Create a .json file for each meta-analysis phenotype
-(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt) 
 ```
 for pheno in `cut -f1 data/$DataFreeze/config_meta_F4.tsv | tail -n +2 | sort | uniq`
 do
@@ -174,7 +173,6 @@ phenolist=`python3 scripts/makesumstats.py --input data/$DataFreeze/config_meta_
 ```
 
 Create a list of meta-analysis phenotypes to analyse (step3_pheno_conf.txt) 
-(Note that this list should be the same (and in the same order) as in the first for-loop creating the pheno.jsons and in the scripts/makesumstats.py)
 
 (Again, back up the old version of step3_pheno_conf.txt if you want to keep it)
 ```
