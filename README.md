@@ -44,7 +44,8 @@ Run this pipeline from the META_ANALYSIS directory
 cd /home/Analysis/META_ANALYSIS/
 ```
 
-Check the summary statistic files submitted to the buckets by the contributing studies (run -> read the INFO printed and check the files created)
+Check the summary statistic files submitted to the buckets by the contributing studies 
+(run -> read the INFO printed and check the files created)
 ```
 scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 ```
@@ -62,6 +63,7 @@ gsutil cp data/$DataFreeze/step1_format.txt gs://long-covid-hg-cromwell/$Analysi
 ```
 
 Connect to Cromwell 
+
 (Did you mean zone [us-central1-b] for instance: [long-covid-hg-cromwell] (Y/n)? [Y])
 ```
 lsof -ti:4999 | xargs kill -9
