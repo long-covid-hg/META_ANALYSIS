@@ -32,7 +32,7 @@ Run the whole pipeline as superuser (root)
 sudo su
 ```
 
-If you have issues with X11 forwarding, run first
+If you have issues with X11 forwarding, check that you have e.g. Xming running, and run (=> "X11 forwarding configured correctly")
 ```
 /home/Analysis/META_ANALYSIS/scripts/x11_fix.sh
 ```
