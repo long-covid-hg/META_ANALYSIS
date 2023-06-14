@@ -54,10 +54,11 @@ This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.D
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (step1_format.txt) 
 In case some sum stat files have formats deviating from SAIGE / REGENIE formats, you can add their transformation in the scripts/format.wdl
 
-Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded in the .json files so far]. First set the analysis date variable in YYYYMMDD format (e.g. AnalysisDate=20220430].
+Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded in the .json files so far]. 
+First set the analysis date variable in YYYYMMDD format (e.g. AnalysisDate=20220430] and the current DataFreeze in DFn format (e.g. DF3).
 ```
 AnalysisDate=[YYYYMMDD]
-DataFreeze=[DF3]
+DataFreeze=[DFn]
 mkdir data/$DataFreeze
 gsutil cp data/$DataFreeze/step1_format.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
