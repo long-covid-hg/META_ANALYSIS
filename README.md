@@ -52,9 +52,10 @@ scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the LongCOVID filename specification and rerun this script, repeating the process until no more GWAS summary files are left unrecognised.
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (step1_format.txt) 
+
 In case some sum stat files have formats deviating from SAIGE / REGENIE formats, you can add their transformation in the scripts/format.wdl
 
-Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded in the .json files so far]. 
+Copy step1_format.txt to the bucket, under a directory for this meta-analysis date [the date is hard-coded in the .json files so far]. 
 First set the analysis date variable in YYYYMMDD format (e.g. AnalysisDate=20220430] and the current DataFreeze in DFn format (e.g. DF3).
 ```
 AnalysisDate=[YYYYMMDD]
