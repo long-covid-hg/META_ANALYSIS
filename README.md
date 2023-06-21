@@ -51,7 +51,9 @@ scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 ```
 This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the LongCOVID filename specification and rerun this script, repeating the process until no more GWAS summary files are left unrecognised.
 
-Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses (step1_format.txt) 
+Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses: data/$DataFreeze/step1_format.txt
+
+A template showing the format of step1_format.txt can be seen in previous data freezes, but the list of summary statistics should be updated using the lists created by the bucket scan.
 
 In case some sum stat files have formats deviating from SAIGE / REGENIE formats, you can add their transformation in the scripts/format.wdl
 
@@ -155,8 +157,9 @@ vi wdl/meta.json
 
 Make configuration files for meta.wdl
 
-Run a script generating a list of the munged summary stat files to meta-analyse (config_meta.tsv) [$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces] 
-[DataFreeze is still hard-coded in the scripts generate_makejson_input.sh (and makejson.py?) - change if you're running other than DF5]
+Run a script generating a list of the munged summary stat files to meta-analyse (config_meta.tsv) 
+$jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces 
+The specific DataFreeze config_meta.tsv file is still hard-coded in the script generate_makejson_input.sh - change accordingly 
 ```
 scripts/generate_makejson_input.sh ${jobid}
 ```
