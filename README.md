@@ -56,7 +56,7 @@ Check the summary statistic files submitted to the buckets by the contributing s
 ```
 scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 ```
-This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the LongCOVID filename specification and rerun this script, repeating the process until no more GWAS summary files are left unrecognised.
+This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the [LongCOVID filename specification](https://docs.google.com/document/d/1XRQgDOEp62TbWaqLYi1RAk1OHVP5T3XZqfs_6PoPt_k/edit#heading=h.h8vqucuo9xe5) and rerun the bucket scan script, repeating the process until no more GWAS summary files are left unrecognised.
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses: data/$DataFreeze/step1_format.txt
 
