@@ -44,6 +44,13 @@ Run this pipeline from the META_ANALYSIS directory
 cd /home/Analysis/META_ANALYSIS/
 ```
 
+First set the analysis date variable in YYYYMMDD format (e.g. AnalysisDate=20220430] and the current DataFreeze in DFn format (e.g. DF5)
+```
+AnalysisDate=[YYYYMMDD]
+DataFreeze=[DFn]
+mkdir data/$DataFreeze
+```
+
 Check the summary statistic files submitted to the buckets by the contributing studies 
 (run -> read the INFO printed and check the files created)
 ```
@@ -53,16 +60,12 @@ This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.D
 
 Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses: data/$DataFreeze/step1_format.txt
 
-A template showing the format of step1_format.txt can be seen in previous data freezes, but the list of summary statistics should be updated using the lists created by the bucket scan.
+A template showing the format of step1_format.txt can be seen in previous data freezes, but the list of summary statistics should be updated using the lists created by the bucket scan
 
 In case some sum stat files have formats deviating from SAIGE / REGENIE formats, you can add their transformation in the scripts/format.wdl
 
-Copy step1_format.txt to the bucket, under a directory for this meta-analysis date [the date is hard-coded in the .json files so far]. 
-First set the analysis date variable in YYYYMMDD format (e.g. AnalysisDate=20220430] and the current DataFreeze in DFn format (e.g. DF3).
+Copy step1_format.txt to the bucket, under a directory for this meta-analysis date  
 ```
-AnalysisDate=[YYYYMMDD]
-DataFreeze=[DFn]
-mkdir data/$DataFreeze
 gsutil cp data/$DataFreeze/step1_format.txt gs://long-covid-hg-cromwell/$AnalysisDate/conf/
 ```
 
@@ -113,7 +116,7 @@ vi wdl/munge.json
 
 Create a list of formatted files and ancestries (step2_munge.txt) 
 (JOBID= HEX ID(s) of formatting job(s))
-First update the current Data Freeze (DF) in the generate_munge_input.sh script output path (e.g. data/DF4/step2_munge.txt)
+First update the current Data Freeze (DF) in the generate_munge_input.sh script output path (e.g. data/DF5/step2_munge.txt)
 ```
 vi scripts/generate_munge_input.sh
 scripts/generate_munge_input.sh $jobid
@@ -158,7 +161,9 @@ vi wdl/meta.json
 Make configuration files for meta.wdl
 
 Run a script generating a list of the munged summary stat files to meta-analyse (config_meta.tsv) 
+
 $jobid is the HEX ID from the munge job, or if you have munged in several jobs, add each of those separated by spaces 
+
 The specific DataFreeze config_meta.tsv file is still hard-coded in the script generate_makejson_input.sh - change accordingly 
 ```
 scripts/generate_makejson_input.sh ${jobid}
