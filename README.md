@@ -58,11 +58,21 @@ scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 ```
 This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the [LongCOVID filename specification](https://docs.google.com/document/d/1XRQgDOEp62TbWaqLYi1RAk1OHVP5T3XZqfs_6PoPt_k/edit#heading=h.h8vqucuo9xe5) and rerun the bucket scan script, repeating the process until no more GWAS summary files are left unrecognised.
 
-Check the summary statistics formats (columns) and create a tab-separated list of summary statistic files and their formats to include in the meta-analyses: data/$DataFreeze/step1_format.txt
+Create the formatting step input file "step1_format.txt" listing all sum stat files and their formats, using the "gwas_results_for_munging.txt" file and an older version of the "step1_format.txt" from a previous DF 
 
-A template showing the format of step1_format.txt can be seen in previous data freezes, but the list of summary statistics should be updated using the lists created by the bucket scan
+Copy the template (replace [PreviousDataFreeze] with e.g. DF4 when running DF5)
+```
+cp data/[PreviousDataFreeze]/step1_format.txt data/$DataFreeze/step1_format_OLD.txt
+```
 
-In case some sum stat files have formats deviating from SAIGE / REGENIE formats, you can add their transformation in the scripts/format.wdl
+Run generate_step1format.sh with input: BucketScanDate [YYYY.MM.DD] and DataFreeze [DFn] (e.g. 2023.06.22 DF5)
+```
+./scripts/generate_step1format.sh {BucketScanDate] [DataFreeze]
+```
+
+Check summary statistics listed and add missing formats in step1_format.txt (separated by tab from the sum stat location)
+
+In case some sum stat files have formats (columns) deviating from SAIGE / REGENIE formats, you can add their transformation in the scripts/format.wdl
 
 Copy step1_format.txt to the bucket, under a directory for this meta-analysis date  
 ```
