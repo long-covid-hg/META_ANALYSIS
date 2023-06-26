@@ -67,7 +67,7 @@ cp data/[PreviousDataFreeze]/step1_format.txt data/$DataFreeze/step1_format_OLD.
 
 Run generate_step1format.sh with input: BucketScanDate [YYYY.MM.DD] and DataFreeze [DFn] (e.g. 2023.06.22 DF5)
 ```
-./scripts/generate_step1format.sh {BucketScanDate] [DataFreeze]
+./scripts/generate_step1format.sh [BucketScanDate] [DataFreeze]
 ```
 
 Check summary statistics listed and add missing formats in step1_format.txt (separated by tab from the sum stat location)
