@@ -153,7 +153,7 @@ jobid={jobid}
 
 Use the same analysis date as with the fromat and munging steps
 ```
-AnalysisDate={[YYYYMMDD]}
+AnalysisDate={YYYYMMDD}
 ```
 
 First, copy the required scripts to the bucket location for this run (if you haven't already in the previous munging step):
