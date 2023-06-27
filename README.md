@@ -2,7 +2,7 @@
 
 [google cloud platform for long-covid](https://console.cloud.google.com/home/dashboard?project=long-covid-hg)
 
-For a new meta-analysis run on long-covid-hg-cromwell virtual machine, go to step 1. Meta-analysis
+For a new meta-analysis run on long-covid-hg-cromwell virtual machine, skip step 0 and go directly to step 1. Meta-analysis
 
 ## 0. Connect to Google Virtual Machine (VM) and set up Cromwell
 
@@ -20,6 +20,7 @@ gcloud docker -- pull gcr.io/covid-19-hg/plots:0.2
 docker tag gcr.io/covid-19-hg/plots:0.2 gcr.io/long-covid-hg/plots:0.2
 gcloud docker -- push gcr.io/long-covid-hg/plots:0.2
 ```
+
 
 ## 1. META-ANALYSIS
 Mainly adopted from the [main HGI meta-analyses](https://github.com/covid19-hg/META_ANALYSIS)
@@ -108,6 +109,10 @@ CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summ
 CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --summary 
 CromwellInteract-master/cromwell_interact.py --port 4999  metadata $jobid --failed
 watch --interval=10 "CromwellInteract-master/cromwell_interact.py --port 4999 metadata $jobid --failed_jobs | tail -n 25"
+```
+To list all recent job IDs (format, munge, meta)
+```
+python3 CromwellInteract-master/cromwell_interact.py --port 4999 log
 ```
 
 ### 1.2 Munging (munge.wdl)
