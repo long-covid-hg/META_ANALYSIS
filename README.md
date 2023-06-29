@@ -181,7 +181,7 @@ $jobid is the HEX ID from the munge job, or if you have munged in several jobs, 
 
 The specific DataFreeze config_meta.tsv file is still hard-coded in the script generate_makejson_input.sh - change accordingly 
 ```
-scripts/generate_makejson_input.sh ${jobid}
+scripts/generate_makejson_input.sh $jobid
 ```
 
 Create a .json file for each meta-analysis phenotype
