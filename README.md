@@ -54,6 +54,9 @@ mkdir data/$DataFreeze
 
 Check the summary statistic files submitted to the buckets by the contributing studies 
 (run -> read the INFO printed and check the files created)
+
+(If there are new upload buckets, add them in scripts/bucketlist.txt manually before running the 1_scan_buckets.sh script)
+
 ```
 scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 ```
