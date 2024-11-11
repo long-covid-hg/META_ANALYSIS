@@ -24,6 +24,7 @@ gcloud docker -- push gcr.io/long-covid-hg/plots:0.2
 
 ## 1. META-ANALYSIS
 Mainly adopted from the [main HGI meta-analyses](https://github.com/covid19-hg/META_ANALYSIS)
+
 Start a new meta-analysis run from this step (if the Cromwell has already been set up)
 
 ### 1.0 X11 forwarding setup
@@ -52,6 +53,12 @@ DataFreeze=[DFn]
 mkdir data/$DataFreeze
 ```
 
+
+Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded for now, but could be automated]
+```
+gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/20220331/conf/
+```
+=======
 Check the summary statistic files submitted to the buckets by the contributing studies 
 (run -> read the INFO printed and check the files created)
 
@@ -188,6 +195,10 @@ scripts/generate_makejson_input.sh $jobid
 ```
 
 Create a .json file for each meta-analysis phenotype
+
+(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt)
+=======
+
 ```
 for pheno in `cut -f1 data/$DataFreeze/config_meta.tsv | tail -n +2 | sort | uniq`
 do
