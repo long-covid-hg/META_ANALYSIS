@@ -16,15 +16,16 @@ workflow munge {
             input: sumstat_file=clean_filter.out
         }
         call lift {
-            input: sumstat_vcf=sumstat_to_vcf.vcf
+            input: sumstat_vcf=sumstat_to_vcf.vcf,is37=clean_filter.is37
         }
         call lift_postprocess {
-            input:
-                lifted_vcf=lift.lifted_variants_vcf,
-                sumstat_file=clean_filter.out
+            input: lifted_vcf=lift.lifted_variants_vcf,sumstat_file=clean_filter.out
         }
         call harmonize {
-            input: sumstat_file=lift_postprocess.lifted_variants, gnomad_ref=sub(gnomad_ref_template, "POP", sumstat_file[1])
+            input:
+                sumstat_file = lift_postprocess.lifted_variants,
+                is37=clean_filter.is37,
+                gnomad_ref = sub(gnomad_ref_template, "POP", sumstat_file[1])
         }
         call plot {
             input: sumstat_file=harmonize.out
@@ -46,15 +47,22 @@ task clean_filter {
     input {
         File sumstat_file
 
+        File b37_ref
+        File b38_ref
+
         String docker
         String chr_col
         String pos_col
         String ref_col
         String alt_col
         String af_col
+        String info_col
         String beta_col
         String se_col
         String pval_col
+
+        Float min_af
+        Float min_info
 
         String outfile = sub(basename(sumstat_file, ".gz"), "\\.bgz$", "") + ".munged.tsv.gz"
     }
@@ -97,8 +105,9 @@ task clean_filter {
                 }
                 print $0
             } NR>1 {
+                for(i=1;i<=NF;i++) {if(length($i)<1){next}};
                 sub("^0", "", $a["#CHR"]); sub("^chr", "", $a["#CHR"]); sub("^X", "23", $a["#CHR"]); sub("^Y", "24", $a["#CHR"]);
-                if ($a["#CHR"] ~ /^[0-9]+$/ && $a["pval"] > 0 && $a["beta"] < 1e6 && $a["beta"] > -1e6 && $a["af_alt"]>0 && (1-$a["af_alt"])>0) {
+                if ($a["#CHR"] ~ /^[0-9]+$/ && $a["pval"] > 0 && $a["beta"] < 1e6 && $a["beta"] > -1e6 && $a["af_alt"]>=~{min_af} && (1-$a["af_alt"])>=~{min_af} && $a["~{info_col}"]>=~{min_info} && $0!~/NA/ ) {
                     printf $1
                     for (i=2; i<=NF; i++) {
                         if (i==pos) {
@@ -129,6 +138,21 @@ task clean_filter {
         if [ $(wc -l n.tmp | cut -d' ' -f1) != 1 ]; then echo "file not square"; exit 1; fi
         if [ $(wc -l chr.tmp | cut -d' ' -f1) -lt 22 ]; then echo "less than 22 chromosomes"; exit 1; fi
 
+        tabix -R ~{b37_ref} ~{outfile} | wc -l > b37.txt && echo "`date` `cat b37.txt` chr 21 positions build 37"
+        tabix -R ~{b38_ref} ~{outfile} | wc -l > b38.txt && echo "`date` `cat b38.txt` chr 21 positions build 38"
+
+        if ((`cat b37.txt` == 0 && `cat b38.txt` == 0))
+        then
+            echo "`date` no chr 21 positions found in either build, quitting"
+            touch is37
+            exit 1
+        elif ((`cat b37.txt` > `cat b38.txt`))
+        then
+            echo "true" > is37
+        else
+            echo "false" > is37
+        fi
+
         echo "`date` done"
 
     >>>
@@ -136,6 +160,7 @@ task clean_filter {
     output {
         File out = outfile
         File tbi = outfile + ".tbi"
+        Boolean is37 = read_boolean("is37")
     }
 
     runtime {
@@ -257,6 +282,8 @@ task lift {
         File b38_assembly_fasta
         File b38_assembly_dict
 
+        Boolean is37
+
         String base = basename(sumstat_vcf, ".vcf.gz")
     }
 
@@ -264,15 +291,26 @@ task lift {
 
         set -euxo pipefail
 
-        echo "`date` lifting to build 38"
-        java -jar /usr/picard/picard.jar LiftoverVcf \
-            -I ~{sumstat_vcf} \
-            -O ~{base}.GRCh38.vcf \
-            --CHAIN ~{chainfile} \
-            --REJECT rejected_variants.vcf \
-            -R ~{b38_assembly_fasta} \
-            --MAX_RECORDS_IN_RAM 500000 \
-            --RECOVER_SWAPPED_REF_ALT true
+        if [ "~{is37}" = true ]
+        then
+
+           echo "`date` lifting to build 38"
+           java -jar /usr/picard/picard.jar LiftoverVcf \
+              -I ~{sumstat_vcf} \
+              -O ~{base}.GRCh38.vcf \
+              --CHAIN ~{chainfile} \
+              --REJECT rejected_variants.vcf \
+              -R ~{b38_assembly_fasta} \
+              --MAX_RECORDS_IN_RAM 500000 \
+              --RECOVER_SWAPPED_REF_ALT true
+
+        else
+
+           echo "`date` already in build 38... skipping liftover step"
+           zcat ~{sumstat_vcf} | awk 'BEGIN{OFS="\t"}$0~/^#/{print;next}{$7="PASS";$8="AlreadyB38";print}' > ~{base}.GRCh38.vcf
+           touch rejected_variants.vcf
+
+        fi
 
     >>>
 
@@ -376,7 +414,11 @@ task lift_postprocess {
                         sumstat_beta = sumstat_line[sumstat_h_idx[beta_col]] if sumstat_line[sumstat_h_idx[beta_col]] != "NA" else None
                         sumstat_line[sumstat_h_idx[af_col]] = str(1 - float(sumstat_af) if sumstat_af is not None else "NA")
                         sumstat_line[sumstat_h_idx[beta_col]] = str(-1 * float(sumstat_beta) if sumstat_beta is not None else "NA")
-                    sumstat_line.extend([str(old_chr), str(old_pos), old_ref, old_alt, info])
+                    if 'AlreadyB38' in info_list:
+                        sumstat_line.extend(['.', '.', '.', '.', info])
+                    else:
+                        sumstat_line.extend([str(old_chr), str(old_pos), old_ref, old_alt, info])
+
                     print(delim.join(sumstat_line))
                     sumstat_line = s_f.readline().strip().split(delim)
                     try:
@@ -419,6 +461,10 @@ task harmonize {
         File gnomad_ref
         String options
 
+        Boolean is37
+
+        File script
+
         String base = basename(sumstat_file, ".tsv.gz")
         String gnomad_ref_base = basename(gnomad_ref)
     }
@@ -435,8 +481,16 @@ task harmonize {
         mv ~{sumstat_file} ~{base}
         mv ~{gnomad_ref} ~{gnomad_ref_base}
 
+        alloptions="~{options}"
+
+        if [ "~{is37}" = true ]
+        then
+            optprealigned="--pre_aligned"
+            test "${alloptions#*$optprealigned}" != "$alloptions" || alloptions="$alloptions $optprealigned"
+        fi 
+
         echo "`date` harmonizing stats with gnomAD"
-        python3 /META_ANALYSIS/scripts/harmonize.py ~{base} ~{gnomad_ref_base} 0 ~{options} \
+        python3 ~{script} ~{base} ~{gnomad_ref_base} 0 $alloptions \
         | bgzip > ~{base}.~{gnomad_ref_base}
         
         tabix -s 1 -b 2 -e 2 ~{base}.~{gnomad_ref_base}
@@ -469,6 +523,8 @@ task plot {
         String docker
         Int loglog_ylim
 
+        File script
+
         String base = basename(sumstat_file)
     }
 
@@ -491,7 +547,7 @@ task plot {
         dev.off()
         EOF
 
-        /META_ANALYSIS/scripts/qqplot.R --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col "pval" --loglog_ylim ~{loglog_ylim}
+        Rscript ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col "pval" --loglog_ylim ~{loglog_ylim}
 
     >>>
 

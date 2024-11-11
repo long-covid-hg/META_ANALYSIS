@@ -1,0 +1,128 @@
+### 2022/05/13
+
+- Reinstating b38 study filter in the munging step
+ -> "munge.json" has been updated to include the "b37_ref" and "b38_ref" file as input in the "clean_filter" task so that genome build of input summary files can be identified
+ -> "munge.wdl" (main workflow) now passes "is37", which is output by the "clean_filter" task, to the "lift" and "harmonize" tasks as input
+ -> "munge.wdl", "clean_filter" task - "b37_ref" and "b38_ref" added as input files (to mirror changes made in "munge.json")
+ -> "munge.wdl", "clean_filter" task - tabix commands usings to generate counts based on "b37_ref" and "b38_ref" files and file "is37" created containing "true" (b37) or "false" (b38), which is now output by this task as a Boolean variable
+ -> "munge.wdl", "lift" task now only performs liftover if "is37" is true, otherwise input vcf has "FILTER" column set to "PASS" and "INFO" set to "AlreadyB38" and then written to output
+ -> "munge.wdl", "lift_postprocess" task updated so that columns related to pre-liftover chromosome, position and alleles are set to "." (missing) if "INFO" column contains "AlreadyB38" (i.e. "is37" is true)
+ -> "munge.wdl", "harmonize" task adds the "--pre-aligned" option to the harmonize.py call if the original summary file was in b37 (and if "--pre-aligned" not already contained within the options set in "munge.json")
+
+
+### 2022/04/26
+
+- Fixing problems caused by change in Docker image
+ -> "harmonize.py" script was a newer version in the "meta" Docker image, so created a copy from the old Docker image and replaced the current version with it
+ -> "harmonize.py" which imported three functions from "meta_analysis.py" - these have now been added into the script and the "from meta_analysis import ..." line removed
+ -> Executable permissions for qqplot.R causing problems, so replaced "~{script}" with "Rscript ~{script}" in "munge.wdl"
+ -> Pre-empted the same permissions issues for "meta_analysis.py" (replaced with "python3 ~{script}") and "qqplot.R" (replaced with "Rscript ~{script}") in meta.wdl
+
+- Fixed filtering during munging
+ -> Fixed typo which meant that INFO filtering was not working
+ -> Added filter to catch variants with any NA fields, as this seems to break meta-analysis script
+
+
+### 2022/04/25
+
+- Cromwell clean-up
+ -> Moved "CromwellInteract-master/" folder up one directory (from "META_ANALYSIS/covid19-hgi/"), so it now sits directly within "META_ANALYSIS/"
+ -> Removed "META_ANALYSIS/covid19-hgi/" directory as nothing in it is used for LongCOVID meta-analysis
+ -> Deleted all .json files within "CromwellInteract-master/tmp/" pertaining to old jobs, except for "jobid.json"
+ -> Updated README.md to account for the new location of the Cromwell interaction tool
+
+- Previous runs clean-up
+ -> Removed old "conf.json" file and the "DF2_bkp/" folder within "META_ANALYSIS/data/"
+ -> Deleted all files in the "DF2" folder within "META_ANALYSIS/data/", to regerenate from scratch
+
+- wdl/json clean-up
+ -> Removed deprecated files "lift.json" and "lift.wdl" from "META_ANALYSIS/scripts/"
+ -> Removed deprecated files "munge_sumstats.json" and "munge_sumstats.wdl" from "META_ANALYSIS/scripts/"
+
+- "scripts/" folder clean-up
+ -> Removed "format" folder, as this is now incorporated into first step of pipeline
+
+- Incoporate external scripts
+ -> "x11_fix.sh" is now located in "META_ANALYSIS/scripts/" and README.md has been updated accordingly
+ -> "1_scan_buckets.sh" is now located in "META_ANALYSIS/scripts/" and README.md has been updated accordingly
+
+- Docker image "meta" now agnostic to script version
+ -> Removed all files from internal folder "META_ANALYSIS/scripts/" from meta Docker image, created new image, version 7.44
+ -> Updated munge.wdl and meta.wdl to point to new Docker image version (7.44)
+ -> Added "munge.harmonize.script" and "munge.plot.script" options pointing to new bucket locations of the harmonize.py and qqplot.R scripts in "wdl/munge.json"
+ -> Added "script" as an input variable to "harmonize" and "plot" tasks and replaced hard-coded references to the scripts with "~{script}" in "wdl/munge.wdl"
+ -> Added "meta_analysis.run_range.script" and "meta_analysis.meta_qq.script" options pointing to the new locations of "meta_analysis.py" and "qqplot.R" in "wdl/meta.json"
+ -> Added "script" as an input variable to "run_range" and "meta_qq" tasks and replaced hard-coded references to the scripts with "~{script}" in "wdl/meta.wdl"
+ -> Added instructions to README.md for copying required scripts to a bucket folder (as they are no longer provided in the Dcker images)
+
+- Munge step input generation script
+ -> "generate_munge_input.sh" added to "META_ANALYSIS/scripts/" folder and can be run using "script/generate_munge_input.sh JOBID [JOBID2 JOBID3 ...]" 
+ -> automatically creates "data/DF2/step2_munge.txt"
+ -> README.md updated to incorporate use of this script
+
+- README.md update
+ -> Replaced instances of the date "20220331" with "[YYYYMMDD]" to make it clearer that users need to input their own dates
+ -> Edited the steps in 1.3 so that the input files "step3_sumstats_loc.txt" and "step3_pheno_conf.txt" are generated using the same phenotype order, as if they are not, the pipeline will break
+
+
+
+### 2022/04/20
+
+Fix 1:
+- "format.wdl" -> if the file format was SAIGE, the whole file was re-bgzipped, but now only the required columns are extracted (in a similar fashion to the other formats)
+
+Fix 2:
+- "munge.json" 
+ -> added "info_col", "min_maf" and "min_info" inputs for the "clean_filter" task
+- "munge.wdl": "clean_filter" task
+ -> added variable definitions for "info_col", "min_maf" and "min_info"
+ -> changed AF filter from >0 to >=min_maf and added INFO>=min_info filter
+
+Fix 3:
+- "generate_makejson_input.sh"
+ -> script edited to add three extra fields to the .json files: "af_alt" and "info", so that these can be incorporated into the meta_analysis.py script
+ -> summary stats are used from "lift_postprocess" task instead of "harmonize", as "N" column is duplicated in "harmonize" task (which may break things later on in the pipeline)
+ -> tweaked the awk commands to make them more efficient
+ -> script moved to "scripts" subfolder and README.md updated to account for this move
+- "makejson.py"
+_-> fixed a hard-coded value that meant only the first 12 entries for each study would be included in the subsequent .json files
+- "meta_analysis.py"
+ -> "Study" class updated to make "af_alt" and "info" required data fields and conf variables (i.e. the .json files containing study info) and "Nsamples" as an optional field
+ -> "af_alt", "info" and "Nsamples" now pulled out for each study, alongside "pos", "eff" (beta) and "pval".
+ -> "af_alt" and "info" now reported for each study, with "Nsamples" reported if included in the input
+ -> averages of "af_alt" and "info", weighted by number of samples in study, are reported for full, leave-one-out and pairwise meta-analyses, in both "inv_var" and "n" methods
+
+Fix 4:
+- "meta_analysis.py"
+ -> Added option to parser for "leave most significant study out" - can be used by including the option "--leave_most_sig_out" to the script "scripts/meta_analysis.py" or added to the option "meta_analysis.run_range.opts" in the "wdl/meta.json" file.
+ -> If >1 study, most significant study is removed for each variant and (if >1 remaining) meta-analysis result reported excluding this study or (if 1 remaining) results for only study.
+ -> "af_alt", "info" and "Nsamples" reported for leave most significant study out analysis
+
+Fix 5:
+- "meta.json"
+ -> added "--leave_most_sig_out" flag to the meta-analysis options ("meta_analysis.run_range.opts") so that lmso is run by default. Remove if you want to disable this option
+ -> added "lmso_inv_var_meta_p" (leave-most-significant-out) to the list of manhattan's to plot. Remove this to stop it plotting the lmso p-values.
+
+Fix 6:
+- "generate_makejson_input.sh"
+ -> [study name] has been replaced with [study name]_[ethnicity], as previous script was only including one ethnicity's results if a study provided results from >1
+ -> only one set of results per study-ethnicity pair is included for each phenotype now
+ -> this script's output file is now written to "data/DF2/" within the "META_ANALYSIS" folder, so the user needs to run it from within the "META_ANALYSIS" folder.
+
+Fix 7:
+- "meta.wdl": "post_filter" task
+ -> variants missing in first GWAS are no longer dropped
+ -> variants present in only one study are dropped
+ -> subset of fields extracted to keep filesize down: variant info fields, all_meta fields and lmso_meta fields
+
+TO DO:
+- add in columns to the meta-analysis results for:
+ -> each study's MAF [X]
+ -> each study's INFO [X]
+ -> overall case count [-]
+ -> overall control count [-]
+ -> overall sample size [X]
+ -> overall (weighted) MAF [X]
+ -> overall (weighted) INFO [X]
+- use n_cases and n_controls in Nsamples not available in study files
+- fix harmonize.py so that "N" column is not added if already exists

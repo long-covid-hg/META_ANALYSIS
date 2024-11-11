@@ -60,9 +60,19 @@ def n_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
     tot_size =0
     sum_betas=0
     sum_weights=0
+
+    sum_af_alt=0
+    sum_info=0
+    sum_Nsamples=0
+
     for s in studies:
         study = s[0]
         dat = s[1]
+
+        if dat.Nsamples is None or dat.Nsamples==0:
+            print("Number of samples was none/zero for variant " + str(dat) + " in study " + study.name, file=sys.stderr)
+            return None
+
         effs_size.append( math.sqrt(study.effective_size) * numpy.sign(dat.beta) * dat.z_score)
         sum_weights+= math.sqrt(study.effective_size)
         sum_betas+=math.sqrt(study.effective_size) * dat.beta
@@ -70,10 +80,18 @@ def n_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
         weights.append(math.sqrt(study.effective_size))
         effs_size_org.append(dat.beta)
 
+        sum_af_alt+=(dat.af_alt*dat.Nsamples)
+        sum_info+=(dat.info*dat.Nsamples)
+        sum_Nsamples+=(dat.Nsamples)
+
     beta_meta=sum_betas/sum_weights
 
+    af_alt_meta=sum_af_alt/sum_Nsamples
+    info_meta=sum_info/sum_Nsamples
+
+
     #TODO se
-    return ( beta_meta, None, max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf( abs( sum( effs_size ) ) / math.sqrt(tot_size) )), effs_size_org, weights) if len(effs_size)==len(studies) else None
+    return ( beta_meta, None, max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf( abs( sum( effs_size ) ) / math.sqrt(tot_size) )), af_alt_meta, info_meta, effs_size_org, weights) if len(effs_size)==len(studies) else None
 
 
 def inv_var_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
@@ -89,12 +107,21 @@ def inv_var_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
 
     effs_inv_var = []
     sum_inv_var=0
+    sum_af_alt=0
+    sum_info=0
+    sum_Nsamples=0
+
     for s in studies:
         study = s[0]
         dat = s[1]
         if dat.se is None or dat.se==0:
             print("Standard error was none/zero for variant " + str(dat) + " in study " + study.name, file=sys.stderr)
             return None
+        # NEED TO USE n_cases AND n_controls IF Nsamples NOT PROVIDED...
+        if dat.Nsamples is None or dat.Nsamples==0:
+            print("Number of samples was none/zero for variant " + str(dat) + " in study " + study.name, file=sys.stderr)
+            return None
+
         var = (dat.se * dat.se)
 
         inv_var =  (1/var)
@@ -104,9 +131,16 @@ def inv_var_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
         weights.append(inv_var)
         effs_size_org.append(dat.beta)
 
+        sum_af_alt+=(dat.af_alt*dat.Nsamples)
+        sum_info+=(dat.info*dat.Nsamples)
+        sum_Nsamples+=(dat.Nsamples)
+
     beta_meta=sum(effs_inv_var)/ sum_inv_var
 
-    return (beta_meta, math.sqrt(1/sum_inv_var), max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf(abs(sum(effs_inv_var) / math.sqrt(sum_inv_var) ))), effs_size_org, weights)
+    af_alt_meta=sum_af_alt/sum_Nsamples
+    info_meta=sum_info/sum_Nsamples
+
+    return (beta_meta, math.sqrt(1/sum_inv_var), max(sys.float_info.min * sys.float_info.epsilon, 2 * scipy.stats.norm.sf(abs(sum(effs_inv_var) / math.sqrt(sum_inv_var) ))), af_alt_meta, info_meta, effs_size_org, weights)
 
 
 def variance_weight_meta( studies : List[Tuple['Study','VariantData']] ) -> Tuple:
@@ -148,6 +182,7 @@ def variance_weight_meta( studies : List[Tuple['Study','VariantData']] ) -> Tupl
 
 SUPPORTED_METHODS = {"n":n_meta,"inv_var":inv_var_meta,"variance":variance_weight_meta}
 
+
 def check_eff_field(field):
     if field.lower() in ["beta","or"]:
         return field.lower()
@@ -165,18 +200,21 @@ def is_symmetric(a1, a2):
 
 class VariantData:
 
-    def __init__(self, chr, pos, ref, alt, beta, pval, se=None, extra_cols=[]):
+    def __init__(self, chr, pos, ref, alt, af_alt, info, beta, pval, se=None, Nsamples=None, extra_cols=[]):
         self.chr = chr
         self.pos = int(float(pos))
         self.ref = ref.strip().upper()
         self.alt = alt.strip().upper()
+        self.af_alt = af_alt
+        self.info = info
         self.beta = beta
         self.pval = pval
-        self.z_scr = None
         try:
-            self.se = float(se) if se is not None  else None
+            self.se = float(se) if se is not None else None
+            self.Nsamples = int(float(Nsamples)) if Nsamples is not None else None
         except ValueError:
             self.se = None
+            self.Nsamples = None
 
         self.extra_cols = extra_cols
 
@@ -239,6 +277,7 @@ class VariantData:
                     return True
                 elif self.ref == other.alt and self.alt == other.ref:
                     self.beta = -1 * self.beta if self.beta is not None else None
+                    self.af_alt = 1 - self.af_alt if self.af_alt is not None else None
                     t = self.alt
                     self.alt = self.ref
                     self.ref = t
@@ -246,6 +285,7 @@ class VariantData:
 
             elif (self.ref == other.alt and self.alt == other.ref) :
                 self.beta = -1 * self.beta if self.beta is not None else None
+                self.af_alt = 1 - self.af_alt if self.af_alt is not None else None
                 t = self.alt
                 self.alt = self.ref
                 self.ref = t
@@ -256,6 +296,7 @@ class VariantData:
                 return True
             elif (self.ref == flip_alt and self.alt==flip_ref):
                 self.beta = -1 * self.beta if self.beta is not None else None
+                self.af_alt = 1 - self.af_alt if self.af_alt is not None else None
                 self.ref =flip_strand(self.alt)
                 self.alt = flip_strand(self.ref)
                 return True
@@ -272,19 +313,18 @@ class VariantData:
         return self.z_scr
 
     def __str__(self):
-        return "chr:{} pos:{} ref:{} alt:{} beta:{} pval:{} se:{} ".format(self.chr, self.pos, self.ref, self.alt, self.beta, self.pval, self.se)
+        return "chr:{} pos:{} ref:{} alt:{} af_alt:{} beta:{} pval:{} se:{} info:{}".format(self.chr, self.pos, self.ref, self.alt, self.af_alt, self.beta, self.pval, self.se, self.info)
 
 
 class Study:
-    REQUIRED_DATA_FIELDS = {"chr":str,"pos":str,"ref":str,"alt":str, "effect":str,
-    "pval":str}
+    REQUIRED_DATA_FIELDS = {"chr":str,"pos":str,"ref":str,"alt":str,"af_alt":str,"info":str,"effect":str,"pval":str}
 
     REQUIRED_CONF = {"name":str,"file":str, "n_cases": int, "n_controls":int,
-    "chr":str,"pos":str,"ref":str,"alt":str, "effect":str,
+    "chr":str,"pos":str,"ref":str,"alt":str,"af_alt":str,"info":str,"effect":str,
     "effect_type":check_eff_field,
     "pval":str}
 
-    OPTIONAL_FIELDS = {"se":str}
+    OPTIONAL_FIELDS = {"se":str,"Nsamples":str}
 
     def __init__(self, conf, chrom=None, dont_allow_space=False):
         '''
@@ -355,6 +395,11 @@ class Study:
         return self.conf["n_controls"]
 
     @property
+    def n_samples(self):
+        return self.conf["n_cases"]+self.conf["n_controls"]
+
+
+    @property
     def effective_size(self):
         if self.eff_size is None:
             self.eff_size = ( (4 * self.n_cases *  self.n_controls  ) / ( self.n_cases+  self.n_controls ))
@@ -370,6 +415,9 @@ class Study:
 
     def has_std_err(self):
         return "se" in self.conf
+
+    def has_n_samples(self):
+        return "Nsamples" in self.conf
 
     def get_next_data(self, just_one: bool = False) -> List[VariantData]:
         """
@@ -413,18 +461,25 @@ class Study:
                 alt = l[self.conf["h_idx"]["alt"]]
 
             pos = l[self.conf["h_idx"]["pos"]]
+            af_alt = l[self.conf["h_idx"]["af_alt"]]
+            info = l[self.conf["h_idx"]["info"]]
             eff = l[self.conf["h_idx"]["effect"]]
             pval = l[self.conf["h_idx"]["pval"]]
 
             pos = int(float(pos))
 
             se = l[self.conf["h_idx"]["se"]] if "se" in self.conf["h_idx"] else None
+            Nsamples = l[self.conf["h_idx"]["Nsamples"]] if "Nsamples" in self.conf["h_idx"] else None
 
             effect_type = self.conf["effect_type"]
             try:
+                af_alt = float(af_alt)
+                info = float(info)
                 pval = float(pval)
                 eff = float(eff)
             except Exception as e:
+                af_alt = None
+                info = None
                 pval = None
                 eff = None
 
@@ -433,7 +488,7 @@ class Study:
 
             extracols = [ l[self.conf["h_idx"][c]] for c in self.conf["extra_cols"] ]
 
-            v = VariantData(chr,pos,ref,alt, eff, pval, se, extracols)
+            v = VariantData(chr,pos,ref,alt,af_alt,info,eff,pval,se,Nsamples,extracols)
 
             if self.prev_var is not None and v < self.prev_var:
                 raise Exception("Disorder in study " + self.conf['name'] + " in file " + self.conf['file'] + ". Sort all summary statistic files by chromosome and then position and rerun.\nOffending line: " + "\t".join(l))
@@ -531,19 +586,20 @@ def do_meta(study_list: List[ Tuple[Study, VariantData]], methods: List[str], is
     meta_res = []
     n_cases = sum([tuple[0].n_cases for tuple in study_list])
     n_controls = sum([tuple[0].n_controls for tuple in study_list])
+    # ADD IN WEIGHTED AF_ALT AND INFO HERE
     n_eff = sum([tuple[0].effective_size_logistic for tuple in study_list])
     for m in met:
         if m is not None:
             if is_het_test:
-                meta_res.append((m[0], m[1], m[2], n_cases, n_controls, n_eff, het_test(m[3], m[4], m[0])))
+                meta_res.append((m[0], m[1], m[2], n_cases, n_controls, n_eff, m[3], m[4], het_test(m[5], m[6], m[0])))
             else:
-                meta_res.append((m[0], m[1], m[2], n_cases, n_controls, n_eff))
+                meta_res.append((m[0], m[1], m[2], n_cases, n_controls, n_eff, m[3], m[4]))
         else:
             meta_res.append(None)
 
     return meta_res
 
-def format_num(num, precision=4):
+def format_num(num, precision=5):
     return numpy.format_float_scientific(num, precision=precision) if num is not None else "NA"
 
 def get_next_variant( studies : List[Study]) -> List[VariantData]:
@@ -613,10 +669,13 @@ def run():
             "pos":"POS",
             "ref":"Allele1",
             "alt":"Allele2",
+            "af_alt":"af_alt",
+            "info":"info"
             "effect":"BETA",
             "effect_type":"beta",
             "pval":"p.value"
             "se":"SE" <- this parameter is optional. If given for compared studies additional p-value will be added using this as a weight for z-score.
+            "Nsamples":"Nsamples" <- this parameter is also optional, as it can be inferred by other parameters.
         Second parameter should be a path to (empty/not existing) directory where the data should be stored
     '''
 
@@ -632,6 +691,9 @@ def run():
 
     parser.add_argument('--leave_one_out', action='store_true', help='Do leave-one-out meta-analysis')
     parser.set_defaults(leave_one_out=False)
+
+    parser.add_argument('--leave_most_sig_out', action='store_true', help='Report meta stats with largest study left out')
+    parser.set_defaults(leave_most_sig_out=False)
 
     parser.add_argument('--is_het_test', action='store_true', help='Do heterogeneity tests based on Cochrans Q and output het_p')
     parser.set_defaults(het_test=False)
@@ -656,17 +718,22 @@ def run():
         for s in studs:
             if not s.has_std_err():
                 raise Exception("Variance based method requested but not all studies have se column specified.")
+            # THIS SHOULDN'T BE NECESSARY - NEED TO COMBINE n_cases AND n_controls IF Nsamples NOT DEFINED
+            if not s.has_n_samples():
+                raise Exception("Variance based method requested but not all studies have Nsamples column specified.")
+
 
     outfile = args.path_to_res
 
     with open( outfile, 'w' ) as out:
 
-        out.write("\t".join(["#CHR","POS","REF","ALT","SNP", studs[0].name + "_beta", studs[0].name + "_sebeta", studs[0].name + "_pval"  ]))
+        ## SHOULD I CORRECT "REF" TO "OTH" AND "ALT" TO "EFF"?
+        out.write("\t".join(["#CHR","POS","REF","ALT","SNP", studs[0].name + "_beta", studs[0].name + "_sebeta", studs[0].name + "_pval", studs[0].name + "_af_alt", studs[0].name + "_INFO", studs[0].name + "_Nsamples" ]))
 
         out.write( ("\t" if len(studs[0].extra_cols) else "") + "\t".join( [studs[0].name + "_" + c for c in studs[0].extra_cols] ) )
         ## align to leftmost STUDY
         for oth in studs[1:len(studs)]:
-            out.write( "\t" +  "\t".join( [ oth.name + "_beta", oth.name + "_sebeta", oth.name + "_pval"] ))
+            out.write( "\t" +  "\t".join( [ oth.name + "_beta", oth.name + "_sebeta", oth.name + "_pval", oth.name + "_af_alt", oth.name + "_INFO", oth.name + "_Nsamples" ] ))
             out.write( ("\t" if len(oth.extra_cols) else "") + "\t".join( [oth.name + "_" + c for c in oth.extra_cols] ) )
 
             if args.pairwise_with_first:
@@ -675,47 +742,82 @@ def run():
                               studs[0].name + "_" + oth.name + "_" +  m + "_meta_beta\t" +
                               studs[0].name + "_" + oth.name + "_" +  m + "_meta_sebeta\t" +
                               studs[0].name + "_" + oth.name + "_" +  m + "_meta_p\t" +
-                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_cases\t" +
-                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_controls\t" +
-                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_effective")
+                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_Ncases\t" +
+                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_Ncontrols\t" +
+                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_Neffective\t" +
+                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_af_alt\t" +
+                              studs[0].name + "_" + oth.name + "_" +  m + "_meta_info")
 
-        out.write("\tall_meta_N")
+        out.write("\tall_meta_Nstudies\tall_meta_Nsamples")
         for m in methods:
             if args.is_het_test:
                 out.write("\tall_"+m+"_meta_beta\t" +
                           "all_"+m+"_meta_sebeta\t" +
                           "all_"+m+"_meta_p\t" +
-                          "all_"+m+"_meta_cases\t" +
-                          "all_"+m+"_meta_controls\t" +
-                          "all_"+m+"_meta_effective\t" +
-                          "all_"+ m +"_het_p")
+                          "all_"+m+"_meta_Ncases\t" +
+                          "all_"+m+"_meta_Ncontrols\t" +
+                          "all_"+m+"_meta_Neffective\t" +
+                          "all_"+m+"_meta_af_alt\t" +
+                          "all_"+m+"_meta_info\t" +
+                          "all_"+m+"_het_p")
             else:
                 out.write("\tall_"+m+"_meta_beta\t" +
                           "all_"+m+"_meta_sebeta\t" +
                           "all_"+m+"_meta_p\t" +
-                          "all_"+m+"_meta_cases\t" +
-                          "all_"+m+"_meta_controls\t" +
-                          "all_"+m+"_meta_effective")
+                          "all_"+m+"_meta_Ncases\t" +
+                          "all_"+m+"_meta_Ncontrols\t" +
+                          "all_"+m+"_meta_Neffective\t" +
+                          "all_"+m+"_meta_af_alt\t" +
+                          "all_"+m+"_meta_info")
+
+
+        if args.leave_most_sig_out:
+            out.write("\tlmso_meta_removed_study_name\tlmso_meta_Nsamples")
+            for m in methods:
+                if args.is_het_test:
+                    out.write("\tlmso_"+m+"_meta_beta\t" +
+                              "lmso_"+m+"_meta_sebeta\t" +
+                              "lmso_"+m+"_meta_p\t" +
+                              "lmso_"+m+"_meta_Ncases\t" +
+                              "lmso_"+m+"_meta_Ncontrols\t" +
+                              "lmso_"+m+"_meta_Neffective\t" +
+                              "lmso_"+m+"_meta_af_alt\t" +
+                              "lmso_"+m+"_meta_info\t" +
+                              "lmso_"+m+"_het_p")
+                else:
+                    out.write("\tlmso_"+m+"_meta_beta\t" +
+                              "lmso_"+m+"_meta_sebeta\t" +
+                              "lmso_"+m+"_meta_p\t" +
+                              "lmso_"+m+"_meta_Ncases\t" +
+                              "lmso_"+m+"_meta_Ncontrols\t" +
+                              "lmso_"+m+"_meta_Neffective\t" +
+                              "lmso_"+m+"_meta_af_alt\t" +
+                              "lmso_"+m+"_meta_info\t")
+
 
         if args.leave_one_out:
             for s in studs:
-                out.write("\t" + "leave_" + s.name + "_N")
+                out.write("\t" + "leave_" + s.name + "_Nsamples")
                 for m in methods:
                     if args.is_het_test:
                         out.write( "\t" +  "\t".join( ["leave_" + s.name + "_" + m + "_meta_beta",
                                                        "leave_" + s.name + "_" + m + "_meta_sebeta",
                                                        "leave_" + s.name + "_" + m + "_meta_p",
-                                                       "leave_" + s.name + "_" + m + "_meta_cases",
-                                                       "leave_" + s.name + "_" + m + "_meta_controls",
-                                                       "leave_" + s.name + "_" + m + "_meta_effective",
+                                                       "leave_" + s.name + "_" + m + "_meta_Ncases",
+                                                       "leave_" + s.name + "_" + m + "_meta_Ncontrols",
+                                                       "leave_" + s.name + "_" + m + "_meta_Neffective",
+                                                       "leave_" + s.name + "_" + m + "_meta_af_alt",
+                                                       "leave_" + s.name + "_" + m + "_meta_info",
                                                        "leave_" + s.name + "_" + m + "_meta_het_p"] ))
                     else:
                         out.write( "\t" +  "\t".join( ["leave_" + s.name + "_" + m + "_meta_beta",
                                                        "leave_" + s.name + "_" + m + "_meta_sebeta",
                                                        "leave_" + s.name + "_" + m + "_meta_p",
-                                                       "leave_" + s.name + "_" + m + "_meta_cases",
-                                                       "leave_" + s.name + "_" + m + "_meta_controls",
-                                                       "leave_" + s.name + "_" + m + "_meta_effective"] ))
+                                                       "leave_" + s.name + "_" + m + "_meta_Ncases",
+                                                       "leave_" + s.name + "_" + m + "_meta_Ncontrols",
+                                                       "leave_" + s.name + "_" + m + "_meta_Neffective",
+                                                       "leave_" + s.name + "_" + m + "_meta_af_alt",
+                                                       "leave_" + s.name + "_" + m + "_meta_info"] ))
 
         out.write("\n")
 
@@ -728,6 +830,7 @@ def run():
 
         while len(matching_studies)>0:
 
+            # Variant info - 5 columns
             d = matching_studies[0][1]
             outdat = [ d.chr, d.pos, d.ref, d.alt]
             v = "{}:{}:{}:{}".format(*outdat)
@@ -735,7 +838,8 @@ def run():
 
             for i,_ in enumerate(studs):
                 if next_var[i] is not None:
-                    outdat.extend([format_num(next_var[i].beta), format_num(next_var[i].se), format_num(next_var[i].pval, 3) ])
+                    # study stats for variant (if present) - 6 columns + nExtra
+                    outdat.extend([format_num(next_var[i].beta), format_num(next_var[i].se), format_num(next_var[i].pval), format_num(next_var[i].af_alt), format_num(next_var[i].info), int(next_var[i].Nsamples) ])
                     outdat.extend([ c for c in next_var[i].extra_cols ])
 
                     # meta analyse pairwise only with the leftmost study
@@ -746,23 +850,31 @@ def run():
                         met = do_meta( [(studs[0],next_var[0]), (studs[i],next_var[i])], methods=methods, is_het_test=args.is_het_test)
                         for m in met:
                             if args.is_het_test:
+                                # pairwise meta results - 9 columns (per method) if het test
                                 outdat.extend([format_num(num) for num in m[0:3]])
                                 outdat.extend([int(num) for num in m[3:6]])
-                                outdat.extend([format_num(m[6])])
+                                outdat.extend([format_num(num) for num in m[6:9]])
                             else:
+                                # pairwise meta results - 8 columns (per method) if no het test
                                 outdat.extend([format_num(num) for num in m[0:3]])
                                 outdat.extend([int(num) for num in m[3:6]])
+                                outdat.extend([format_num(num) for num in m[6:8]])
 
                     else:
                         if args.is_het_test:
-                            outdat.extend(["NA"] * len(methods) * 7)
+                            # pairwise not possible: left-most study is missing var: 9 missing columns if het test
+                            outdat.extend(["NA"] * len(methods) * 9)
                         else:
-                            outdat.extend(["NA"] * len(methods) * 6)
+                            # pairwise not possible: left-most study is missing var: 8 missing columns if no het test
+                            outdat.extend(["NA"] * len(methods) * 8)
                 else:
+                    # SHOULD THESE BE THE OPPOSITE WAY ROUND? I HAVE CORRECTED FOR NOW, BUT SWITCH 9 & 8 IF NEEDED
                     if args.is_het_test:
-                        outdat.extend(['NA'] * (3 + len(studs[i].extra_cols) + (len(methods)*6 if args.pairwise_with_first and i>0 else 0) ) )
+                        # pairwise not possible for this study - (6+nExtra)+(9*nMethods) empty cols if pairwise and het test and not first study, otherwise (6+nExtra) empty cols if pairwise and het test and first study
+                        outdat.extend(['NA'] * (6 + len(studs[i].extra_cols) + (len(methods)*9 if args.pairwise_with_first and i>0 else 0) ) )
                     else:
-                        outdat.extend(['NA'] * (3 + len(studs[i].extra_cols) + (len(methods)*7 if args.pairwise_with_first and i>0 else 0) ) )
+                        # pairwise not possible for this study - (6+nExtra)+(9*nMethods) empty cols if pairwise and no het test and not first study, otherwise (6+nExtra) empty cols if pairwise and no het test and first study
+                        outdat.extend(['NA'] * (6 + len(studs[i].extra_cols) + (len(methods)*8 if args.pairwise_with_first and i>0 else 0) ) )
 
             meta_res = []
             if len( matching_studies )>1:
@@ -770,41 +882,136 @@ def run():
                 for m in met:
                     if m is not None:
                         if args.is_het_test:
+                            # standard meta results - 9 columns (per method) if het test
                             meta_res.extend([format_num(num) for num in m[0:3]])
                             meta_res.extend([int(num) for num in m[3:6]])
-                            meta_res.extend([format_num(m[6])])
+                            meta_res.extend([format_num(num) for num in m[6:9]])
                         else:
+                            # standard meta results - 8 columns (per method) if no het tes
                             meta_res.extend([format_num(num) for num in m[0:3]])
                             meta_res.extend([int(num) for num in m[3:6]])
+                            meta_res.extend([format_num(num) for num in m[6:8]])
                     else:
                         if args.is_het_test:
-                            meta_res.extend(['NA'] * 7)
+                            # standard meta returned None so 9 missing columns (per method) if het test
+                            meta_res.extend(['NA'] * 9)
                         else:
-                            meta_res.extend(['NA'] * 6)
+                            # standard meta returned None so 8 missing columns (per method) if no het test
+                            meta_res.extend(['NA'] * 8)
+
+
             else:
                 if args.is_het_test:
+                    # only one study has results - per method: 8 columns (var sumstats) for left-most study and NA column if het test
                     meta_res.extend( [format_num(matching_studies[0][1].beta),
                                       format_num(matching_studies[0][1].se) ,
                                       format_num(matching_studies[0][1].pval),
                                       int(matching_studies[0][0].n_cases) ,
                                       int(matching_studies[0][0].n_controls) ,
-                                      int(matching_studies[0][0].effective_size_logistic) ,
+                                      int(matching_studies[0][0].effective_size_logistic),
+                                      format_num(matching_studies[0][1].af_alt),
+                                      format_num(matching_studies[0][1].info),
                                       'NA']  * len(methods) )
                 else:
+                    # only one study has results - per method: 8 columns (var sumstats) for left-most study if no het test
                     meta_res.extend( [format_num(matching_studies[0][1].beta),
                                       format_num(matching_studies[0][1].se) ,
                                       format_num(matching_studies[0][1].pval),
                                       int(matching_studies[0][0].n_cases) ,
                                       int(matching_studies[0][0].n_controls) ,
-                                      int(matching_studies[0][0].effective_size_logistic)]  * len(methods) )
+                                      int(matching_studies[0][0].effective_size_logistic),
+                                      format_num(matching_studies[0][1].af_alt),
+                                      format_num(matching_studies[0][1].info)]  * len(methods) )
 
+            # single column - number of studies with the current variant
             outdat.append( str(len(matching_studies)) )
+            # single column - number of total samples in meta for current variant
+            outdat.append( sum([matching_studies[j][1].Nsamples for j in range(len(matching_studies))]) )
+            # append meta-analysis results (or missing columns)
             outdat.extend(meta_res)
 
+            # leave most-significant result out
+            if args.leave_most_sig_out:
+                # only run if at least two studies left after removing most-sig
+                if len( matching_studies )>1:
+                    # get number of study for most significant p-value
+                    mspsi = numpy.argmin( [matching_studies[j][1].pval for j in range(len(matching_studies))] )
+                    # extract matching study results without most-significant study
+                    matching_studies_lmso = [(studs[i], var) for i,var in enumerate(next_var) if studs[i].name != matching_studies[mspsi][0].name and var is not None]
+                    # add removed study name and sample size for lmso meta column
+                    outdat.append( matching_studies[mspsi][0].name )
+                    outdat.append( sum([matching_studies_lmso[j][1].Nsamples for j in range(len(matching_studies_lmso))]) )
+
+                    # run lmso meta-analysis if 3 or more studies have data for this variant
+                    if len( matching_studies )>2:
+
+                        # run meta-analysis with these results
+                        met = do_meta( matching_studies_lmso, methods=methods, is_het_test=args.is_het_test )
+                        # print meta-analysis results for each method
+                        for m in met:
+                            if m is not None:
+                                # if het test flag is set, 9 values outputted from meta
+                                if args.is_het_test:
+                                    outdat.extend([format_num(num) for num in m[0:3]])
+                                    outdat.extend([int(num) for num in m[3:6]])
+                                    outdat.extend([format_num(num) for num in m[6:9]])
+                                # otherwise, 8 values outputted
+                                else:
+                                    outdat.extend([format_num(num) for num in m[0:3]])
+                                    outdat.extend([int(num) for num in m[3:6]])
+                                    outdat.extend([format_num(num) for num in m[6:8]])
+                            else:
+                                # m returned as None (meta not performed for this method for this var)
+                                # add NA*9 if het test flag set, 8*NA otherwise
+                                if args.is_het_test:
+                                    outdat.extend(['NA'] * 9)
+                                else:
+                                    outdat.extend(['NA'] * 8)
+
+                    # if only two matching studies, then just print stats of least significant study
+                    elif len( matching_studies )==2:
+
+                        # use stats from only study remaining - 9 columns per method if het test flag set
+                        if args.is_het_test:
+                            outdat.extend( [format_num(matching_studies_lmso[0][1].beta),
+                                            format_num(matching_studies_lmso[0][1].se),
+                                            format_num(matching_studies_lmso[0][1].pval),
+                                            int(matching_studies_lmso[0][0].n_cases),
+                                            int(matching_studies_lmso[0][0].n_controls),
+                                            int(matching_studies_lmso[0][0].effective_size_logistic) ,
+                                            format_num(matching_studies_lmso[0][1].af_alt),
+                                            format_num(matching_studies_lmso[0][1].info),
+                                            'NA']  * len(methods) )
+
+                        # use stats from only study remaining - 8 columns per method if het test flag not set
+                        else:
+                            outdat.extend( [format_num(matching_studies_lmso[0][1].beta),
+                                            format_num(matching_studies_lmso[0][1].se),
+                                            format_num(matching_studies_lmso[0][1].pval),
+                                            int(matching_studies_lmso[0][0].n_cases),
+                                            int(matching_studies_lmso[0][0].n_controls),
+                                            int(matching_studies_lmso[0][0].effective_size_logistic) ,
+                                            format_num(matching_studies_lmso[0][1].af_alt),
+                                            format_num(matching_studies_lmso[0][1].info)]  * len(methods) )
+
+                # else, only one study so not possible to remove - set lmso columns to NA
+                else:
+                    # add NA for each removed study name column and lmso Nsamples column
+                    outdat.extend(['NA'] * 2)
+                    if args.is_het_test:
+                        # 9 columns if het test flag set
+                        outdat.extend(['NA'] * 9 * len(methods))
+                    else:
+                        # 8 columns if het test flag not set
+                        outdat.extend(['NA'] * 8 * len(methods))
+
+
+            # leave one out results
             if args.leave_one_out:
                 for s,_ in enumerate(studs):
                     matching_studies_loo = [(studs[i], var) for i,var in enumerate(next_var) if s != i and var is not None]
-                    outdat.append( str(len(matching_studies_loo)) )
+                    #outdat.append( str(len(matching_studies_loo)) )
+                    outdat.append( sum([matching_studies_loo[j][1].Nsamples for j in range(len(matching_studies_loo))]) )
                     if len(matching_studies_loo) > 1:
                         met = do_meta( matching_studies_loo, methods=methods, is_het_test=args.is_het_test )
                         for m in met:
@@ -812,37 +1019,42 @@ def run():
                                 if args.is_het_test:
                                     outdat.extend([format_num(num) for num in m[0:3]])
                                     outdat.extend([int(num) for num in m[3:6]])
-                                    outdat.extend(format_num(m[6]))
+                                    outdat.extend([format_num(num) for num in m[6:9]])
                                 else:
                                     outdat.extend([format_num(num) for num in m[0:3]])
                                     outdat.extend([int(num) for num in m[3:6]])
+                                    outdat.extend([format_num(num) for num in m[6:8]])
                             else:
                                 if args.is_het_test:
-                                    outdat.extend(['NA'] * 7)
+                                    outdat.extend(['NA'] * 9)
                                 else:
-                                    outdat.extend(['NA'] * 6)
+                                    outdat.extend(['NA'] * 8)
 
                     elif len(matching_studies_loo) == 1:
                         if args.is_het_test:
                             outdat.extend( [format_num(matching_studies_loo[0][1].beta),
                                             format_num(matching_studies_loo[0][1].se) ,
-                                            format_num(matching_studies_loo[0][1].pval, 3),
+                                            format_num(matching_studies_loo[0][1].pval),
                                             int(matching_studies_loo[0][0].n_cases) ,
                                             int(matching_studies_loo[0][0].n_controls) ,
                                             int(matching_studies_loo[0][0].effective_size_logistic) ,
+                                            format_num(matching_studies_loo[0][1].af_alt),
+                                            format_num(matching_studies_loo[0][1].info),
                                             'NA']  * len(methods) )
                         else:
                             outdat.extend( [format_num(matching_studies_loo[0][1].beta),
                                             format_num(matching_studies_loo[0][1].se) ,
-                                            format_num(matching_studies_loo[0][1].pval, 3),
+                                            format_num(matching_studies_loo[0][1].pval),
                                             int(matching_studies_loo[0][0].n_cases) ,
                                             int(matching_studies_loo[0][0].n_controls) ,
-                                            int(matching_studies_loo[0][0].effective_size_logistic)]  * len(methods) )
+                                            int(matching_studies_loo[0][0].effective_size_logistic),
+                                            format_num(matching_studies_loo[0][1].af_alt),
+                                            format_num(matching_studies_loo[0][1].info)]  * len(methods) )
                     else:
                         if args.is_het_test:
-                            outdat.extend(['NA'] * 7 * len(methods))
+                            outdat.extend(['NA'] * 9 * len(methods))
                         else:
-                            outdat.extend(['NA'] * 6 * len(methods))
+                            outdat.extend(['NA'] * 8 * len(methods))
 
             out.write( "\t".join([ str(o) for o in outdat]) + "\n" )
 

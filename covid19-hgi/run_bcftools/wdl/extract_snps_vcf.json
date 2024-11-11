@@ -1,9 +1,0 @@
-{
-   
-    "extracts_snps_vcf.chrom_list": ["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22"],
-        
-    "extracts_snps_vcf.chrom_subset.chromPath":"gs://dsge-covid19-data/15042021/imputed/chrCHROM.dose.vcf.gz",
-    "extracts_snps_vcf.chrom_subset.variants_extract":"gs://dsge-covid19-data/15042021/variants.extract",      
-        
-    "extracts_snps_vcf.docker": "eu.gcr.io/covid19-hgi-ganna/convert_vcf:0.1.2"
-}   

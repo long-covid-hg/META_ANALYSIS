@@ -65,6 +65,8 @@ task run_range {
         String chrom
         File conf
 
+        File script
+
         String docker
         String method
         String opts
@@ -80,7 +82,7 @@ task run_range {
         echo "chromosome: ~{chrom}"
         echo "conf: ~{conf}"
 
-        /META_ANALYSIS/scripts/meta_analysis.py ~{conf} ~{pheno}_chr~{chrom}_meta_out.tsv ~{method} ~{opts} --chrom ~{chrom}
+        python3 ~{script} ~{conf} ~{pheno}_chr~{chrom}_meta_out.tsv ~{method} ~{opts} --chrom ~{chrom}
 
         echo "`date` done"
     >>>
@@ -247,6 +249,8 @@ task meta_qq {
         String docker
         String pvals_to_plot
 
+        File script
+
         String base = basename(meta_file)
     }
 
@@ -256,7 +260,7 @@ task meta_qq {
 
         mv ~{meta_file} ~{base}
 
-        /META_ANALYSIS/scripts/qqplot.R --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col ~{pvals_to_plot} --loglog_ylim ~{loglog_ylim}
+        Rscript ~{script} --file ~{base} --bp_col "POS" --chrcol "#CHR" --pval_col ~{pvals_to_plot} --loglog_ylim ~{loglog_ylim}
 
     >>>
 
@@ -276,7 +280,7 @@ task meta_qq {
     }
 }
 
-# Filter out variants not in the left-most study (usually Finngen)
+# Filter out variants in <2 studies and extract variant details and meta-analysis results columns only
 task post_filter {
 
     input {
@@ -291,10 +295,10 @@ task post_filter {
 
         set -exo pipefail
 
-        # Use the first '_beta' suffix column as the beta of the left-most variant. If NA --> remove variant
+        # Use the "all_meta_Nstudies" column to remove variants in <2 studies
         zcat ~{meta_file} | awk -v OFS='\t' '
-        NR==1 {for(i=1;i<=NF;i++) if($i~"_beta$") {beta_col=i; break} print $0}
-        (NR>1 && $beta_col != "NA") {print}
+        NR==1 {str="#CHR\tPOS\tREF\tALT\tSNP\tRSID";for(i=1;i<=NF;i++){col[$i]=i;if($i~/^(all_|lmso_)/&&$i~/(_meta_|_het_)/){c[i]++;str=str"\t"$i}};print str}
+        (NR>1 && $col["all_meta_Nstudies"] != 1) {str=$col["#CHR"]"\t"$col["POS"]"\t"$col["REF"]"\t"$col["ALT"]"\t"$col["SNP"]"\t"$col["rsid"];for(i=1;i<=NF;i++){if(i in c){str=str"\t"$i}};print str}
         ' | bgzip > ~{base}_filtered.tsv.gz
         tabix -s 1 -b 2 -e 2 ~{base}_filtered.tsv.gz
 
