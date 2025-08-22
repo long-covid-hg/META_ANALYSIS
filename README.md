@@ -54,7 +54,6 @@ mkdir data/$DataFreeze
 ```
 
 
-=======
 Check the summary statistic files submitted to the buckets by the contributing studies 
 (run -> read the INFO printed and check the files created)
 
@@ -192,8 +191,8 @@ scripts/generate_makejson_input.sh $jobid
 
 Create a .json file for each meta-analysis phenotype
 
-(Note that if you change this list of meta phenos, it has to be changed (and kept in the same order) also in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt)
-=======
+Check that the list of meta phenos matches the order in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt
+
 
 ```
 for pheno in `cut -f1 data/$DataFreeze/config_meta.tsv | tail -n +2 | sort | uniq`
