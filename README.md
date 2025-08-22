@@ -54,10 +54,6 @@ mkdir data/$DataFreeze
 ```
 
 
-Copy to the bucket, under a directory for this meta-analysis date [the date is hard-coded for now, but could be automated]
-```
-gsutil cp data/DF2/step1_format.txt gs://long-covid-hg-cromwell/20220331/conf/
-```
 =======
 Check the summary statistic files submitted to the buckets by the contributing studies 
 (run -> read the INFO printed and check the files created)
