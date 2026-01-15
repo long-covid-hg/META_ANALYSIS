@@ -24,6 +24,7 @@ gcloud docker -- push gcr.io/long-covid-hg/plots:0.2
 
 ## 1. META-ANALYSIS
 Mainly adopted from the [main HGI meta-analyses](https://github.com/covid19-hg/META_ANALYSIS)
+
 Start a new meta-analysis run from this step (if the Cromwell has already been set up)
 
 ### 1.0 X11 forwarding setup
@@ -52,6 +53,7 @@ DataFreeze=[DFn]
 mkdir data/$DataFreeze
 ```
 
+
 Check the summary statistic files submitted to the buckets by the contributing studies 
 (run -> read the INFO printed and check the files created)
 
@@ -60,7 +62,7 @@ Check the summary statistic files submitted to the buckets by the contributing s
 ```
 scripts/1_scan_buckets.sh -b scripts/bucketlist.txt
 ```
-This will create in the /home/Analysis/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the [LongCOVID filename specification](https://docs.google.com/document/d/1XRQgDOEp62TbWaqLYi1RAk1OHVP5T3XZqfs_6PoPt_k/edit#heading=h.h8vqucuo9xe5) and rerun the bucket scan script, repeating the process until no more GWAS summary files are left unrecognised.
+This will create in the /home/Analysis/META_ANALYSIS/Bucket_scan/ a directory called YYYY.MM.DD/ and a number of files. Check the "gwas_results_for_munging.txt" file to ensure that you are not missing any GWAS summary files - "unrecognised_files_all_buckets_YYYY.MM.DD.txt" will list files that don't match the required name format. If you see any GWAS summary files listed here, rename the files to match the [LongCOVID filename specification](https://docs.google.com/document/d/1XRQgDOEp62TbWaqLYi1RAk1OHVP5T3XZqfs_6PoPt_k/edit#heading=h.h8vqucuo9xe5) and rerun the bucket scan script, repeating the process until no more GWAS summary files are left unrecognised.
 
 Create the formatting step input file "step1_format.txt" listing all sum stat files and their formats, using the "gwas_results_for_munging.txt" file and an older version of the "step1_format.txt" from a previous DF 
 
@@ -188,6 +190,7 @@ scripts/generate_makejson_input.sh $jobid
 ```
 
 Create a .json file for each meta-analysis phenotype
+(Check that the list of meta phenos matches the order in scripts/makesumstats.py and the for-loop generating step3_pheno_conf.txt)
 ```
 for pheno in `cut -f1 data/$DataFreeze/config_meta.tsv | tail -n +2 | sort | uniq`
 do
